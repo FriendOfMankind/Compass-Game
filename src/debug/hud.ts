@@ -4,7 +4,7 @@ export interface HudData {
   latDeg: number;
   lonDeg: number;
   headingDeg: number;
-  speedKn: number;
+  speedMs: number;
   windText: string;
   lstText: string;
   timeText: string;
@@ -30,7 +30,7 @@ export class DebugHud {
     const ew = d.lonDeg >= 0 ? 'E' : 'W';
     this.el.textContent = [
       `pos   ${Math.abs(d.latDeg).toFixed(3)}°${ns}  ${Math.abs(d.lonDeg).toFixed(3)}°${ew}`,
-      `hdg   ${d.headingDeg.toFixed(1).padStart(5, '0')}°   spd ${d.speedKn.toFixed(1)} kn`,
+      `hdg   ${d.headingDeg.toFixed(1).padStart(5, '0')}°   spd ${d.speedMs.toFixed(1)} m/s`,
       `wind  ${d.windText}`,
       `time  ${d.timeText}   LST ${d.lstText}`,
       `fps   ${d.fps.toFixed(0)}   seed ${d.seed}   step ${d.step ?? '—'}`,

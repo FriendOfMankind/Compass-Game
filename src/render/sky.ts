@@ -62,11 +62,17 @@ export class Sky {
   }
 
   /** Updates colours; returns the horizon colour so fog/ocean can match it. */
-  update(hour: number, camera: THREE.Camera): THREE.Color {
+  update(hour: number, camWorldPos: THREE.Vector3): THREE.Color {
     const p = paletteFor(hour);
     this.uniforms.uZenith.value.copy(p.zenith);
     this.uniforms.uHorizon.value.copy(p.horizon);
-    this.mesh.position.copy(camera.position);
+    this.mesh.position.copy(camWorldPos);
     return p.horizon;
   }
+}
+
+/** Crude placeholder sun: rises due east at 6h, sets due west at 18h, slightly south. Real sun in M2. */
+export function sunDirection(hour: number, out = new THREE.Vector3()): THREE.Vector3 {
+  const a = ((hour - 6) / 12) * Math.PI;
+  return out.set(Math.cos(a), Math.max(Math.sin(a), 0.05), 0.35).normalize();
 }

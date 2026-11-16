@@ -1,4 +1,6 @@
 // Scenario URL parsing: ?seed=&lat=&lon=&time=&heading=&step=&debug=1
+//   plus &wind=<deg the wind blows FROM> &at=deck|helm|mast &speed=<m/s>
+//   debug views: &look=<head yaw deg, relative to bow> &cam=chase (external camera)
 // Pure: no DOM access. Pass in location.search.
 
 export interface Scenario {
@@ -10,7 +12,14 @@ export interface Scenario {
   headingDeg: number;
   step: number | null;
   debug: boolean;
+  windFromDeg: number;
+  at: Station;
+  speedMs: number;
+  lookDeg: number;
+  chaseCam: boolean;
 }
+
+export type Station = 'deck' | 'helm' | 'mast';
 
 // World bounds (DESIGN §6). Longitude is relative to the patch, centred on 0.
 export const LAT_MIN_DEG = -25;
@@ -34,6 +43,11 @@ export const DEFAULT_SCENARIO: Omit<Scenario, 'seed'> = {
   headingDeg: 0,
   step: null,
   debug: false,
+  windFromDeg: 60, // NE trades
+  at: 'deck',
+  speedMs: 0,
+  lookDeg: 0,
+  chaseCam: false,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -76,5 +90,14 @@ export function parseScenario(search: string, fallbackSeed: number): Scenario {
     headingDeg: normalizeDeg(num(p.get('heading')) ?? DEFAULT_SCENARIO.headingDeg),
     step: step === null ? null : Math.max(0, Math.trunc(step)),
     debug: debugRaw !== null && debugRaw !== '0' && debugRaw !== 'false',
+    windFromDeg: normalizeDeg(num(p.get('wind')) ?? DEFAULT_SCENARIO.windFromDeg),
+    at: parseStation(p.get('at')),
+    speedMs: clamp(num(p.get('speed')) ?? DEFAULT_SCENARIO.speedMs, 0, 30),
+    lookDeg: num(p.get('look')) ?? 0,
+    chaseCam: p.get('cam') === 'chase',
   };
+}
+
+function parseStation(raw: string | null): Station {
+  return raw === 'helm' || raw === 'mast' ? raw : 'deck';
 }

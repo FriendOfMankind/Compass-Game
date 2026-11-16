@@ -44,3 +44,16 @@ describe('parseHour', () => {
     expect(parseHour('nope')).toBeNull();
   });
 });
+
+describe('M1 params', () => {
+  it('parses wind, station and speed', () => {
+    const s = parseScenario('?wind=-30&at=helm&speed=9', 1);
+    expect(s.windFromDeg).toBe(330);
+    expect(s.at).toBe('helm');
+    expect(s.speedMs).toBe(9);
+  });
+  it('defaults: NE trades, on deck, stopped; unknown station → deck', () => {
+    const s = parseScenario('?at=crowsnest', 1);
+    expect(s).toMatchObject({ windFromDeg: 60, at: 'deck', speedMs: 0 });
+  });
+});
