@@ -3,6 +3,13 @@
 ## Current milestone
 M3: Instruments & navigation + tutorial (sky steps): BUILT, awaiting Colin's playtest. Next: M4 (world: islands, ports, trade winds + tutorial steps 7, 8, 10).
 
+### Session handoff (2026-11-16)
+- Last thing fixed: chart table wouldn't open (the E that opened it also closed it in the same frame). Fixed in `src/app/navigation.ts` (`chartCloseArmed`), verified in-browser: E opens, E closes, E reopens, Esc closes.
+- Colin's M3 playtest is only partial: he reported the chart bug, nothing else yet. Before starting M4, ask for the M3 playtest answers below (tutorial confusion, parrot laughs, instrument progression, chart usefulness).
+- Colin is on Windows PowerShell 5.1: give commands one per block, no `&&`. He runs `git pull` then `npm run dev`.
+- Git: commits authored as Claude <noreply@anthropic.com> (history was rewritten once with Colin's approval). Remote: github.com/FriendOfMankind/Compass-Game, branch `main`.
+- Throwaway Playwright drivers used for interaction checks: pattern = start Vite via `createServer`, load `?debug=1`, inspect `window.__game`. Recreate as needed (they lived in the session scratchpad).
+
 ## Done
 - **M0: Skeleton** — Vite + TS (strict) + Three.js; first-person mouse-look (click for pointer lock); static ocean plane + time-of-day sky gradient; game clock (20 min/day); debug HUD (`?debug=1`); scenario URL parser (`seed/lat/lon/time/heading/step/debug`); vitest (10 tests); `npm run shot` (Playwright, spins up its own Vite server).
   - `time=` accepts `dawn|day|noon|dusk|night|midnight`, `HH:MM`, or a number of hours.
@@ -60,6 +67,7 @@ M3: Instruments & navigation + tutorial (sky steps): BUILT, awaiting Colin's pla
 ## Known bugs / rough edges
 - Looking abeam on a heeled boat shifts your view ~5–7° (measured: camera pitch 12° → 17.6° actual). Correct physics, but it makes "look at the star" fiddly; the reticle + 4° tolerance cover it. Watch in playtest.
 - Tutorial step 9 teleports you from 12°N to 12°S between steps (story jump, "crossing the line"). Real crossing comes with M4's world.
+- FIXED: chart table opened and instantly closed on the same E press.
 - Headless screenshots run ~17–20 fps, so parrot lines may already have expired in automated shots. Not a game bug.
 - Headless screenshot FPS is 17–27 (SwiftShader software GL). Not representative; check real FPS in the debug HUD.
 - Wheel fills the bottom of the helm view; boom sits just above head height at the mast. Tune after playtest.

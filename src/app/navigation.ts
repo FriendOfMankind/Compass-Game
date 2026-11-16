@@ -43,6 +43,8 @@ export class Navigation {
   private readonly tape = new CompassTape();
   readonly chart = new Chart();
   private chartSeen = false;
+  /** The E that opened the chart must be released before E can close it (same-frame bug). */
+  private chartCloseArmed = false;
 
   constructor(seed: number, startFix: LatLon, private readonly dialogue: Dialogue, onChartClose: () => void) {
     this.dr = createDr(startFix);
@@ -69,6 +71,7 @@ export class Navigation {
   resetFix(fix: LatLon): void { this.dr = setFix({ ...createDr(fix), speedKn: this.dr.speedKn }, fix); }
 
   openChart(): void {
+    this.chartCloseArmed = false;
     if (document.pointerLockElement) document.exitPointerLock();
     this.chart.open(this.dr, {
       mark: () => { this.dr = markPosition(this.dr); this.chart.update(this.dr); },
@@ -84,7 +87,10 @@ export class Navigation {
       this.logDoneAtS = f.nowS + LOG_GLASS_S;
       this.dialogue.say('log.thrown', f.nowS, 5);
     }
-    if (this.chart.isOpen && (input.pressed('Escape') || input.pressed('KeyE'))) { this.chart.close(); this.onChartClose(); }
+    if (this.chart.isOpen) {
+      if (!this.chartCloseArmed) this.chartCloseArmed = !input.down('KeyE');
+      else if (input.pressed('Escape') || input.pressed('KeyE')) { this.chart.close(); this.onChartClose(); }
+    }
   }
 
   /** Returns extra prompt text for this frame. */
