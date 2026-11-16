@@ -1,7 +1,10 @@
 # progress.md
 
 ## Current milestone
-M2: The real sky: BUILT, awaiting Colin's playtest. Next after sign-off: M3 (instruments & navigation).
+M2: The real sky: BUILT, awaiting Colin's playtest. Next: **M3 = instruments & navigation + tutorial (sky steps)**. Scope (Colin's call, after M2):
+- DESIGN M3 as written: compass binnacle, hand measurement, kamal, quadrant, log line, chart table with DR track + latitude lines, tests for DR + instrument noise.
+- PLUS from M5, pulled forward: dialogue system + `src/content/parrot.json`, and tutorial steps 1–6 and 9 (walk, steer, sails, find Dipper, find Polaris, fist-measure latitude, Crossing the Line / Southern Cross), each with a check function and `step=` URL.
+- Steps 7–8 (latitude-sail to an island, dead reckoning to find it) and 10 (graduation) need islands → move to M4. M5 becomes polish + guinea-pig test.
 
 ## Done
 - **M0: Skeleton** — Vite + TS (strict) + Three.js; first-person mouse-look (click for pointer lock); static ocean plane + time-of-day sky gradient; game clock (20 min/day); debug HUD (`?debug=1`); scenario URL parser (`seed/lat/lon/time/heading/step/debug`); vitest (10 tests); `npm run shot` (Playwright, spins up its own Vite server).
@@ -24,7 +27,8 @@ M2: The real sky: BUILT, awaiting Colin's playtest. Next after sign-off: M3 (ins
   - `src/astro/`: `time.ts` (JD, GMST, LST, low-precision sun), `transform.ts` (eq→horizontal, eq→world rotation matrix), `stars.ts` (catalogue, lookups, Crux pole construction, B–V colour). `src/data/constellations.ts`: Dipper, Little Dipper, Cassiopeia, Crux, Pointers, Orion, Scorpius as HIP pairs (resolved from HYG Bayer letters).
   - All DESIGN §4 tests pass, plus: Merak→Dubhe ×5 ≈ Polaris, every constellation HIP exists, date-window test. Crux ×4.5 lands within 3° of the pole with no fudging.
   - Render: `render/celestial.ts` (one per-frame update: sky gradient from real sun altitude, sun disc, star sphere rotated by the tested matrix), `render/stars.ts` (Points shader; size/brightness by magnitude, colour by B–V, horizon extinction). Observer lat/lon = the boat's live position, so sailing north raises Polaris.
-  - Keys: C toggles constellation lines. Params: `date=YYYY-MM-DD`, `pitch=`, `lines=1`. Debug HUD shows LST and sun altitude.
+  - Keys: C toggles constellation lines + chart markers: Polaris ring/label with dashed guide from the Dipper pointers (Merak→Dubhe ×5.2), and a South Pole ring/label ("no star here") with dashed guide along Crux (Gacrux→Acrux ×4.5). `render/skyMarkers.ts`.
+  - Debug HUD: `look` line (compass direction + altitude of screen centre) and a centre crosshair. Params: `date=YYYY-MM-DD`, `pitch=`, `lines=1`. Debug HUD shows LST and sun altitude.
   - Acceptance screenshots: `?lat=20&time=23&heading=180&look=180&pitch=25` (Polaris ~20° up under the Dipper), `?lat=-15&time=23&heading=0&look=180&pitch=30` (Crux + Pointers, Scorpius rising SE).
 
 ## Decisions

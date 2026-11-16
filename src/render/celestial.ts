@@ -32,7 +32,8 @@ export class Celestial {
   }
 
   get linesVisible(): boolean { return this.stars.lines.visible; }
-  set linesVisible(v: boolean) { this.stars.lines.visible = v; }
+  /** Constellation lines + Polaris / south-pole markers and their guide lines. */
+  set linesVisible(v: boolean) { this.stars.lines.visible = v; this.stars.markers.visible = v; }
 
   update(jd: number, latDeg: number, lonDeg: number, camWorldPos: THREE.Vector3): CelestialState {
     const lst = lstDeg(jd, lonDeg);

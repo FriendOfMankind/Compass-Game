@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { STARS, bvToRgb, starByHip } from '../astro/stars';
 import { equatorialVector } from '../astro/transform';
 import { CONSTELLATIONS } from '../data/constellations';
+import { buildSkyMarkers } from './skyMarkers';
 
 // Star sphere: stars are placed ONCE in the fixed equatorial frame, then the whole group is
 // rotated by astro/transform.equatorialToWorldMatrix (tested against equatorialToHorizontal).
@@ -41,6 +42,7 @@ const fragmentShader = /* glsl */ `
 export class StarField {
   readonly group = new THREE.Group();
   readonly lines: THREE.LineSegments;
+  readonly markers = buildSkyMarkers();
   private readonly material: THREE.ShaderMaterial;
   private readonly lineMaterial: THREE.LineBasicMaterial;
   private readonly m4 = new THREE.Matrix4();
@@ -86,7 +88,7 @@ export class StarField {
     this.lines.frustumCulled = false;
     this.lines.visible = false;
 
-    this.group.add(points, this.lines);
+    this.group.add(points, this.lines, this.markers);
     this.group.matrixAutoUpdate = false;
     this.group.renderOrder = -1;
     points.renderOrder = -1;
