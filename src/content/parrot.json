@@ -153,5 +153,19 @@
   ],
   "doldrums.exit": [
     "Trade wind again. Northeast up here, southeast down there. Reliable, unlike you."
+  ],
+  "round.start": [
+    "New orders. Latitude's exact, direction's a shrug. Get to the latitude first, then run along it.",
+    "Sail north or south until the star says the right height. Then turn. That's the whole trick."
+  ],
+  "round.win": [
+    "We found it. I'll be telling everyone I navigated.",
+    "Arrived. Somewhat on purpose. Well done.",
+    "Land, and the right land. Don't let it go to your head."
+  ],
+  "island.wrong": [
+    "Wrong island. Compare the shape to the orders.",
+    "Lovely island. Not ours.",
+    "That's not it. Check your latitude."
   ]
 }

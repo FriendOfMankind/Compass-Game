@@ -46,7 +46,8 @@ function compassRose(c: CanvasRenderingContext2D, x: number, y: number, r: numbe
   c.restore();
 }
 
-export interface ChartView { W: number; H: number; spanDeg: number; ruleLat: number | null }
+export interface ChartIsland { name: string; latDeg: number; lonDeg: number }
+export interface ChartView { W: number; H: number; spanDeg: number; ruleLat: number | null; known: ChartIsland[]; orders: string | null }
 
 export function drawChart(c: CanvasRenderingContext2D, dr: DrState, v: ChartView): void {
   const { W, H, spanDeg } = v;
@@ -99,6 +100,23 @@ export function drawChart(c: CanvasRenderingContext2D, dr: DrState, v: ChartView
   c.beginPath(); c.arc(W / 2, H / 2, 9, 0, Math.PI * 2); c.stroke();
   c.font = 'italic 15px Georgia, serif'; c.textAlign = 'left';
   c.fillText(dr.speedKn === null ? 'Reckoned position (no speed logged: throw the log)' : `Reckoned ${fmtLat(cy, 1)} ${fmtLon(cx, 1)} · ${dr.speedKn.toFixed(1)} kn`, W / 2 + 14, H / 2 - 10);
+
+  // Islands you've seen up close, inked in by hand.
+  c.font = 'italic 14px Georgia, serif'; c.textAlign = 'left';
+  for (const k of v.known) {
+    const x = X(k.lonDeg), y = Y(k.latDeg);
+    c.fillStyle = 'rgba(150, 120, 60, 0.55)'; c.strokeStyle = INK; c.lineWidth = 1.2;
+    c.beginPath(); c.ellipse(x, y, 7, 5, 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.fillStyle = INK; c.fillText(k.name, x + 10, y + 4);
+  }
+  if (v.orders) {
+    c.font = 'italic 15px Georgia, serif'; c.textAlign = 'center';
+    const tw = c.measureText(v.orders).width + 28;
+    c.fillStyle = 'rgba(251, 240, 214, 0.9)'; c.strokeStyle = RUST; c.lineWidth = 1;
+    c.fillRect(W / 2 - tw / 2, 30, tw, 28); c.strokeRect(W / 2 - tw / 2 + 0.5, 30.5, tw - 1, 27);
+    c.fillStyle = INK; c.fillText(`Orders: ${v.orders}`, W / 2, 49);
+    c.textAlign = 'left';
+  }
 
   compassRose(c, 90, H - 100, 52); // bottom-left: clear of the latitude labels on the right
 

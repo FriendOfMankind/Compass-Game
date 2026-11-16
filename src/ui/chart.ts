@@ -2,7 +2,7 @@
 // marks and latitude lines you rule. Never shows the true position (no GPS, DESIGN §7).
 // Drag across the chart to lay the ruler on a latitude; release to rule the line.
 import { rulerLatitude, type DrState } from '../nav/dr';
-import { drawChart } from './chartDraw';
+import { drawChart, type ChartIsland } from './chartDraw';
 
 export interface ChartActions {
   mark(): void;
@@ -21,6 +21,8 @@ export class Chart {
   private dr: DrState | null = null;
   private actions: ChartActions | null = null;
   private ruleLat: number | null = null; // ruler being dragged
+  known: ChartIsland[] = [];
+  orders: string | null = null;
 
   constructor() {
     this.root.id = 'chart';
@@ -88,6 +90,6 @@ export class Chart {
     if (this.canvas.width !== Math.round(r.width * dpr)) { this.canvas.width = Math.round(r.width * dpr); }
     if (this.canvas.height !== Math.round(r.height * dpr)) { this.canvas.height = Math.round(r.height * dpr); }
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawChart(this.ctx, dr, { W: r.width, H: r.height, spanDeg: this.spanDeg, ruleLat: this.ruleLat });
+    drawChart(this.ctx, dr, { W: r.width, H: r.height, spanDeg: this.spanDeg, ruleLat: this.ruleLat, known: this.known, orders: this.orders });
   }
 }

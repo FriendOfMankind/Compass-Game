@@ -4,7 +4,7 @@ import { parseHour, parseScenario, DEFAULT_SCENARIO } from '../src/debug/params'
 describe('parseScenario', () => {
   it('uses defaults and the fallback seed when empty', () => {
     const s = parseScenario('', 777);
-    expect(s).toEqual({ ...DEFAULT_SCENARIO, seed: 777 });
+    expect(s).toEqual({ ...DEFAULT_SCENARIO, seed: 777, round: 1 }); // bare URL = play round 1
   });
 
   it('parses the full design example', () => {
@@ -68,5 +68,15 @@ describe('M2 params', () => {
   it('bad date falls back to mid-April default', () => {
     expect(parseScenario('?date=2026-13-40', 1).date).toEqual({ year: 2026, month: 4, day: 15 });
     expect(parseScenario('?date=yesterday', 1).date).toEqual({ year: 2026, month: 4, day: 15 });
+  });
+});
+
+describe('M4 params', () => {
+  it('round: explicit, default on a bare URL, off when a position/step is given', () => {
+    expect(parseScenario('?round=3', 1).round).toBe(3);
+    expect(parseScenario('?seed=5', 1).round).toBe(1);
+    expect(parseScenario('?lat=10', 1).round).toBeNull();
+    expect(parseScenario('?step=2', 1).round).toBeNull();
+    expect(parseScenario('?at=helm&round=2', 1).round).toBe(2);
   });
 });

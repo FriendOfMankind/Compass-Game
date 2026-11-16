@@ -18,7 +18,9 @@ export class WorldSim {
   readonly world: World;
   readonly islands: Islands;
   private readonly windField: WindField;
-  private readonly toast = new Toast();
+  readonly toast = new Toast();
+  /** Arrival at any island (rounds use it). */
+  onArrive: ((isl: Island, nowS: number) => void) | null = null;
   hullScrapes = 0;
   prox: Proximity | null = null;
   private lastReefS = -99;
@@ -72,6 +74,7 @@ export class WorldSim {
 
   private arrive(isl: Island, nowS: number): void {
     this.visited = isl.id;
+    if (this.onArrive) { this.onArrive(isl, nowS); return; }
     this.toast.show(isl.name, `${isl.port ? 'A port. ' : ''}${isl.blurb}`, nowS);
     this.dialogue.say('island.arrive', nowS, 30);
   }

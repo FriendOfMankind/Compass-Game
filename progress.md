@@ -3,7 +3,8 @@
 ## Current milestone
 M4, split in two (Colin said "keep going" after M3.5 was merged to main):
 - **M4a: the world**: BUILT (islands, wind field, reefs, landing, haze, end-to-end voyage test).
-- **M4b: the loop**: NEXT. Rounds (random start + target island, described by exact latitude + vague direction per DESIGN §7), kamal knots = port latitudes, discovered islands on the chart, tutorial steps 7, 8, 10.
+- **M4b: the loop**: BUILT (rounds, orders, kamal knots, discovered islands on the chart).
+- Tutorial steps 7, 8, 10 moved to M5 (DESIGN lists "all 10 steps" there; they need a scripted tutorial island). Not built.
 M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and so are the M3 playtest answers.
 
 ### Session handoff (2026-11-16)
@@ -67,6 +68,13 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
   - Render: `render/islands.ts` (vertex-coloured terrain, Kenney palms, shore rocks, reef coral-head line with visible pass, dock + huts + flag on ports; loaded lazily within 1.5 km). `render/haze.ts`: islands fade to the horizon colour between 180 and 650 m (tunable `ISLAND_VISIBLE_M`), separately from the sea fog.
   - `tests/voyage.test.ts`: for 5 seeds, autopilot latitude-sails from a port to the farthest island in another group using the real wind, boat and hazards, and arrives.
 
+- **M4b: Rounds (built)**
+  - `world/rounds.ts` (pure, tested): round N of a seed = a target island + a start at sea 1.5–5° of latitude and 1.5–4° of longitude away, ≥ 1.5 km from land, after dark (19:30–02:30 home time). Orders = exact latitude + "somewhere to the east/west" (DESIGN §7).
+  - `app/rounds.ts`: places the boat (never in irons, trimmed for the local wind), jumps the clock forward to the round's hour, resets DR to the start fix, shows the orders (toast + persistent card top right + on the chart). Arriving at the target wins; next round after 9 s. Wrong island: name + "not the one in your orders".
+  - Kamal knots are now the northern port latitudes + the orders' latitude (labelled with names). South of the line the kamal has no Polaris to measure, so southern targets get no knot.
+  - Chart: islands you've reached are inked in with their names; orders shown at the top.
+  - URLs: a bare URL (or `?seed=N`) plays round 1; `?round=N` jumps; any of `lat/lon/step/at` = free sailing (all older scenario URLs unchanged). `?debug=1` adds `__game.rounds`, `__game.worldSim`, `__game.teleport(lat, lon)`.
+
 ## Decisions
 - Real star data (HYG v4.x, mag ≤ 5.0), J2000, no precession/refraction.
 - HYG license confirmed CC BY-SA 4.0 (astronexus.com/projects/hyg). Attribute in credits; share-alike likely covers the derived `stars.json`. GitHub mirror is frozen; canonical source is codeberg.org/astronexus/hyg (blocked from the cloud container — download from astronexus.com or have Colin drop the CSV in).
@@ -81,6 +89,8 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 - **Scale tension: DECIDED in M3**: knots are cosmetic (×0.6 m/s); the chart does DR maths internally, so players never multiply silly numbers. Was: time compression 72× ≪ distance compression ~185×. Fun visual speed (~12 m/s ≈ 1°/50 s) = 1°/game-hour = 60 "knots" in honest DR units. Options: accept silly knot numbers, slow the boat and lean on warp, or define a game knot. M1 shows m/s only.
 
 ## Open questions (Colin)
+- Rounds: is "exact latitude + east/west" the right difficulty? Easier option: also give the longitude roughly. Harder: drop the direction.
+- Should orders stay on screen (current) or only on the chart (more immersive, more forgetting)?
 - How is the round target described? Exact lat (latitude sailing) + vague bearing, per DESIGN §7?
 - Daytime spawns: wait for night (anchor fast-forward) until the noon-sun sight exists?
 
@@ -105,6 +115,13 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 - No Milky Way (DESIGN: only if cheap). Skipped for now.
 
 ## Playtest notes (Colin)
+### M4: please answer these
+`git pull`, `npm run dev`, open `http://localhost:5173/` (plays round 1; add `?seed=7` etc. for other worlds).
+1. Could you find the target with Polaris + latitude sailing? How long did a round take?
+2. Islands: recognisable from the orders' description? Visible from far enough (~650 m)?
+3. Wind: do the trades/doldrums feel like a thing you plan around, or just noise?
+4. Reefs: did you see the pass?
+
 ### M3.5: please answer these
 `git pull`, `npm run dev`, then: `/?at=helm&time=10&heading=90&lat=12&debug=1` (day), `/?at=helm&lat=15&time=21&debug=1` (night), walk to the chart table and drag a latitude line, `/?step=1`.
 1. Better-looking? Anything that looks worse than before?

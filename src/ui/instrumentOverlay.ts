@@ -16,6 +16,7 @@ export interface OverlayInput {
   lookAltDeg: number;
   project: Projector;
   kamalKnotDeg: number;
+  kamalKnotLabel: string;
   quadrantReadingDeg: number;
   quadrantSwingDeg: number;
 }
@@ -89,7 +90,7 @@ export class InstrumentOverlay {
     c.strokeStyle = 'rgba(230, 220, 190, 0.8)'; c.lineWidth = 1.5;
     c.beginPath(); c.moveTo(x + w / 2, (tr.y + bl.y) / 2); c.lineTo(window.innerWidth / 2, window.innerHeight + 10); c.stroke();
     c.fillStyle = 'rgba(255, 240, 210, 0.95)'; c.font = '14px Georgia, serif';
-    c.fillText(`knot ${o.kamalKnotDeg}°`, x + w + 8, tr.y + 5);
+    c.fillText(`knot: ${o.kamalKnotLabel}`, x + w + 8, tr.y + 5);
     this.caption('Kamal: bottom edge on the horizon. Star above the top edge = you\'re further from the pole than this knot. Scroll to change knot.');
   }
 

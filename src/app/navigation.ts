@@ -60,13 +60,21 @@ export class Navigation {
     document.addEventListener('mousemove', (e) => { if (this.raised && (e.buttons & 2) === 0) this.raised = false; });
     window.addEventListener('wheel', (e) => {
       if (!this.raised || this.instrument !== 'kamal') return;
-      const n = DEFAULT_KAMAL_KNOTS_DEG.length;
+      const n = this.knots.length;
       this.knotIdx = (this.knotIdx + (e.deltaY > 0 ? -1 : 1) + n) % n;
     });
   }
   private readonly onChartClose: () => void;
 
-  get kamalKnotDeg(): number { return DEFAULT_KAMAL_KNOTS_DEG[this.knotIdx]; }
+  /** Kamal string knots: one per known port latitude (+ the orders' latitude), or plain degrees. */
+  private knots: { deg: number; label: string }[] = DEFAULT_KAMAL_KNOTS_DEG.map((d) => ({ deg: d, label: `${d}°` }));
+  get kamalKnotDeg(): number { return this.knots[Math.min(this.knotIdx, this.knots.length - 1)].deg; }
+  get kamalKnotLabel(): string { return this.knots[Math.min(this.knotIdx, this.knots.length - 1)].label; }
+  setKamalKnots(knots: { deg: number; label: string }[]): void {
+    if (!knots.length) return;
+    this.knots = [...knots].sort((a, b) => a.deg - b.deg);
+    this.knotIdx = Math.min(this.knotIdx, this.knots.length - 1);
+  }
 
   /** Restart DR from a known position (port departure, tutorial teleport). */
   resetFix(fix: LatLon): void { this.dr = setFix({ ...createDr(fix), speedKn: this.dr.speedKn }, fix); }
@@ -121,7 +129,7 @@ export class Navigation {
       this.quadrantDeg = quadrantReadingDeg(f.lookAltDeg, f.hullPitchDeg, f.hullRollDeg, f.nowS);
       this.overlay.draw({
         instrument: this.instrument, lookAzDeg: f.lookAzDeg, lookAltDeg: f.lookAltDeg, project: f.project,
-        kamalKnotDeg: this.kamalKnotDeg, quadrantReadingDeg: this.quadrantDeg,
+        kamalKnotDeg: this.kamalKnotDeg, kamalKnotLabel: this.kamalKnotLabel, quadrantReadingDeg: this.quadrantDeg,
         quadrantSwingDeg: Math.sin(f.nowS * 2.3) * 0.35 * f.hullPitchDeg,
       });
     } else this.overlay.clear();

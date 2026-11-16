@@ -1,4 +1,6 @@
-// Scenario URL parsing: ?seed=&lat=&lon=&time=&heading=&step=&debug=1
+// Scenario URL parsing: ?seed=&lat=&lon=&time=&heading=&step=&debug=1&round=N
+//   round: play round N of this seed's world. A bare URL (no lat/lon/step/at) starts round 1;
+//   any of those params means free sailing from that spot instead.
 //   plus &wind=<deg the wind blows FROM> &at=deck|helm|mast &speed=<m/s>
 //   &date=YYYY-MM-DD (game start date; default mid-April, see progress.md) &lines=1 (constellation lines)
 //   debug views: &look=<head yaw deg, relative to bow> &pitch=<head pitch deg> &cam=chase (external camera)
@@ -23,6 +25,7 @@ export interface Scenario {
   chaseCam: boolean;
   date: { year: number; month: number; day: number };
   lines: boolean;
+  round: number | null;
 }
 
 export type Station = 'deck' | 'helm' | 'mast' | 'chart';
@@ -57,6 +60,7 @@ export const DEFAULT_SCENARIO: Omit<Scenario, 'seed'> = {
   chaseCam: false,
   date: { year: 2026, month: 4, day: 15 },
   lines: false,
+  round: null,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -107,6 +111,7 @@ export function parseScenario(search: string, fallbackSeed: number): Scenario {
     chaseCam: p.get('cam') === 'chase',
     date: parseDate(p.get('date')) ?? DEFAULT_SCENARIO.date,
     lines: flag(p.get('lines')),
+    round: parseRound(p),
   };
 }
 
@@ -124,4 +129,10 @@ export function parseDate(raw: string | null): Scenario['date'] | null {
   const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
   return { year, month, day };
+}
+
+function parseRound(p: URLSearchParams): number | null {
+  const r = num(p.get('round'));
+  if (r !== null) return Math.max(1, Math.trunc(r));
+  return ['lat', 'lon', 'step', 'at'].some((k) => p.has(k)) ? null : 1;
 }

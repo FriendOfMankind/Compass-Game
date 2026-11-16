@@ -23,6 +23,9 @@ import { Navigation } from './app/navigation';
 import { TutorialRunner } from './tutorial/runner';
 import { controlsFor } from './app/controls';
 import { WorldSim } from './app/worldSim';
+import { RoundRunner } from './app/rounds';
+import { ParrotNags } from './app/nags';
+import { OrdersCard } from './ui/ordersCard';
 import { setHazeColor } from './render/haze';
 import './ui/theme.css';
 import type { StepSetup } from './tutorial/steps';
@@ -83,7 +86,6 @@ let warp = initialWarp();
 let waveTime = 0;
 let simAccum = 0;
 const pose = { h: 0, pitch: 0, roll: 0 };
-const nag = { irons: 0, luff: 0, southLook: 0 }; // seconds each parrot-worthy condition has held
 let wasRaised = false;
 
 const input = new Input();
@@ -91,6 +93,7 @@ const prompt = new Prompt();
 const dialogue = new Dialogue(scenario.seed);
 const choice = new Choice();
 const hud = scenario.debug ? new DebugHud() : null;
+const nags = new ParrotNags(dialogue);
 const worldSim = new WorldSim(scenario.seed, dialogue);
 scene.add(worldSim.islands.group);
 boat = worldSim.clearSpawn(boat);
@@ -126,6 +129,40 @@ const tutorial = scenario.step === null ? null : new TutorialRunner(scenario.ste
     if (!nav.available.has(nav.instrument)) nav.instrument = (ids[0] as InstrumentId) ?? 'hand';
   },
 }, dialogue, choice);
+
+// Rounds (core loop): bare URL or ?round=N. Kamal knots = northern port latitudes + the orders'.
+const ordersCard = new OrdersCard();
+const rounds = scenario.round === null || tutorial ? null : new RoundRunner(worldSim.world, scenario.seed, scenario.round, {
+  placeBoat: (latDeg, lonDeg, h0) => {
+    Object.assign(wind, worldSim.windAt(latDeg, lonDeg, clock.gameSeconds)); // trim for the wind actually there
+    const headingDeg = trueWindAngle(h0, wind.fromDeg) < 50 ? (h0 + 90) % 360 : h0; // never start in irons
+    boat = worldSim.clearSpawn({ ...boat, x: lonDeg * M_PER_DEG, z: -latDeg * M_PER_DEG, headingDeg, speedMs: 4, trimDeg: optimalTrim(trueWindAngle(headingDeg, wind.fromDeg)) });
+    nav.resetFix({ latDeg, lonDeg });
+    mode = 'helm'; player = { ...STATION_STAND.helm };
+  },
+  setHour: (h) => { // always forward: the next time it's h o'clock
+    const t = dayNumber(clock) * 86400 + h * 3600;
+    clock = { ...clock, gameSeconds: t > clock.gameSeconds ? t : t + 86400 };
+    return clock.gameSeconds;
+  },
+  setOrders: (text) => {
+    nav.chart.orders = text;
+    ordersCard.set(`Round ${rounds?.round.n ?? ''} · orders`, text);
+    const t = rounds?.round.target;
+    nav.setKamalKnots([
+      ...worldSim.world.islands.filter((i) => i.port && i.latDeg > 0.5 && i.id !== t?.id).map((i) => ({ deg: +i.latDeg.toFixed(1), label: `${i.latDeg.toFixed(1)}° ${i.name}` })),
+      ...(t && t.latDeg > 0.5 ? [{ deg: +t.latDeg.toFixed(1), label: `${t.latDeg.toFixed(1)}° ${t.name} (orders)` }] : []),
+    ]);
+  },
+  discover: (isl) => { if (!nav.chart.known.some((k) => k.name === isl.name)) nav.chart.known.push({ name: isl.name, latDeg: isl.latDeg, lonDeg: isl.lonDeg }); },
+}, dialogue, worldSim.toast);
+if (rounds) {
+  worldSim.onArrive = (isl, nowS) => rounds.onArrive(isl, nowS, clock.gameSeconds);
+  rounds.start(performance.now() / 1000);
+}
+if (scenario.debug) Object.assign((window as unknown as { __game: object }).__game, {
+  rounds, worldSim, teleport: (latDeg: number, lonDeg: number) => { boat = { ...boat, x: lonDeg * M_PER_DEG, z: -latDeg * M_PER_DEG }; },
+});
 
 // --- helpers ----------------------------------------------------------------
 let lastMs = performance.now();
@@ -165,17 +202,6 @@ function handleKeys(): void {
   if (st.id === 'chart') nav.openChart();
 }
 
-/** Occasional parrot remarks for things the player keeps doing. */
-function parrotNags(tel: ReturnType<typeof telemetry>, look: { lookAzDeg: number; lookAltDeg: number }, latDeg: number, dt: number, nowS: number): void {
-  nag.irons = mode === 'helm' && tel.twaDeg < 38 ? nag.irons + dt : 0;
-  nag.luff = tel.luffing && tel.twaDeg >= 38 ? nag.luff + dt : 0;
-  const northLow = Math.abs(((look.lookAzDeg + 540) % 360) - 180) < 25 && look.lookAltDeg < 15;
-  nag.southLook = latDeg < -1 && northLow && celestial.lastSunAltDeg < -10 ? nag.southLook + dt : 0;
-  if (nag.irons > 4) dialogue.say('irons', nowS, 45);
-  if (nag.luff > 10) dialogue.say('luff.long', nowS, 60);
-  if (nag.southLook > 4) dialogue.say('south.lookingForPolaris', nowS, 120);
-}
-
 // --- loop -------------------------------------------------------------------
 function frame(nowMs: number): void {
   const dt = Math.min(0.1, (nowMs - lastMs) / 1000);
@@ -201,6 +227,7 @@ function frame(nowMs: number): void {
   while (simAccum >= SIM_STEP_S) { boat = stepBoat(boat, boatInput, wind, SIM_STEP_S); simAccum -= SIM_STEP_S; }
   clock = tickClock(clock, simDt);
   ({ boat, blockWarp } = worldSim.update(boat, -boat.z / M_PER_DEG, nowS, camWorld));
+  rounds?.update(nowS);
   waveTime += dt; // waves animate in real time even under warp, or the sea looks frantic
 
   // Hull pose: sample the same waves the shader draws, then low-pass (a 12 m hull has inertia).
@@ -259,7 +286,7 @@ function frame(nowMs: number): void {
     mode, compassDeg: nav.compassDeg, speedKn: toKnots(boat.speedMs), efficiency: tel.efficiency, luffing: tel.luffing,
     ...look, latDeg, lstDeg: sky.lstDeg, instrument: nav.instrument, raised: nav.raised,
   }, nowS, dt);
-  parrotNags(tel, look, latDeg, dt, nowS);
+  nags.update({ mode, twaDeg: tel.twaDeg, luffing: tel.luffing, ...look, latDeg, sunAltDeg: celestial.lastSunAltDeg }, dt, nowS);
   dialogue.update();
 
   hud?.update(nowMs, {
