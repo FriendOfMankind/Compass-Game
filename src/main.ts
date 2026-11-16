@@ -16,6 +16,7 @@ import { Ship, DECK_Y } from './render/ship';
 import { Lighting } from './render/lighting';
 import { Clouds } from './render/clouds';
 import { Sound } from './audio/sound';
+import { almanacLines } from './app/almanacText';
 import { Input } from './ui/input';
 import { Prompt } from './ui/prompt';
 import { Dialogue } from './ui/dialogue';
@@ -257,8 +258,9 @@ function frame(nowMs: number): void {
   const look = lookAngles();
   const navFrame = {
     mode, trueHeadingDeg: boat.headingDeg, yawRateDeg: boat.yawRateDeg, speedMs: boat.speedMs, simDt, nowS, ...look,
-    hullPitchDeg: THREE.MathUtils.radToDeg(pose.pitch), hullRollDeg: THREE.MathUtils.radToDeg(pose.roll), project,
+    hullPitchDeg: THREE.MathUtils.radToDeg(pose.pitch), hullRollDeg: THREE.MathUtils.radToDeg(pose.roll), project, homeHour: hour,
   };
+  if (nav.chart.isOpen) nav.chart.almanac = nav.available.has('chronometer') ? almanacLines(jdStart, clock.gameSeconds) : null;
   nav.handleInput(input, navFrame);
   const navUi = nav.update(navFrame);
   const ui = controlsFor({

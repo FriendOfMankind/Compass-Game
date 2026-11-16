@@ -1,7 +1,8 @@
 # progress.md
 
 ## Current milestone
-**M5: Tutorial & parrot: BUILT** (all 10 steps; graduation hands over to round 1). Acceptance is human-only: "a fresh player completes the tutorial without outside help and laughs at least once". Needs Colin + a guinea pig. Next: M6 (gold + upgrades, cloudy nights, sound, title screen, credits, save).
+**M6: Progression & polish: BUILT.** That was the last milestone in DESIGN §12. Acceptance ("a 30–60 minute game loop from tutorial to chronometer") is estimated, not measured: tutorial ~10 min + ~6 rounds at ~3–5 min to afford both instruments. Nobody has played it end to end. Colin (or a guinea pig) needs to.
+**M5: Tutorial & parrot: BUILT** (all 10 steps; graduation hands over to round 1). Acceptance is human-only ("completes the tutorial without help and laughs once"). Unverified.
 
 Previous: M4, split in two (Colin said "keep going" after M3.5 was merged to main; M4 merged to main too):
 - **M4a: the world**: BUILT (islands, wind field, reefs, landing, haze, end-to-end voyage test).
@@ -88,6 +89,15 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
   - Islands now vanish completely past the haze range (fragment discard): fading to the horizon colour alone left a pale bump against the darker sky.
   - Verified in-browser: step 8 log → chart mark → arrival → step 9; step 10 → round 1 orders.
 
+- **M6: Progression & polish (built)**
+  - `sim/progression.ts` (pure, tested): gold per round = 30 + 8/° of latitude + 5/° of longitude − 10 per hull scrape (min 10); quadrant 120, chronometer 300 (both after ~6 typical rounds). Start: hand + kamal. Save = `{seed, round, gold, owned, known}`, validated on load.
+  - `app/career.ts` + `app/save.ts` (localStorage, every access try/catch) + `ui/harbour.ts`: after a win, a pay sheet + shop; "Set sail" starts the next round. Hull is repaired each round.
+  - `ui/title.ts`: bare URL shows a title over a dusk sea: Continue (from the save) / Learn the ropes (`?step=1`) / New voyage (`?seed=random&round=1`) / Credits (HYG CC BY-SA 4.0, Kenney CC0, IM Fell OFL, three.js MIT). Every button navigates to a scenario URL; `&resume=1` loads the save.
+  - Clouds (`render/clouds.ts`): fbm cloud dome, dark at night (hides stars), white by day. Rounds 1–2 clear, then 40% of nights cloudy (cover 0.35–0.65). `?clouds=0..1`.
+  - Sound (`audio/sound.ts`): all procedural Web Audio: sea, wind (by wind strength), hull rush (by speed), luffing flap, parrot squawk per line, log splash, reef crunch, arrival bell. Starts on first click/key (autoplay rules). M mutes (remembered). Verified to run without errors; **not listened to** (no audio in the cloud container).
+  - Chronometer (key 4): brass watch with home time + your meridian drawn on the sky. With one, the chart shows an almanac: tonight's home-meridian passage times for 11 bright stars. Method: time a star at its highest/due south; 4 min earlier than the almanac = 1° east. Pure + tested in `astro/almanac.ts` (recovers longitude exactly from passage times). First raise → parrot explains.
+  - Free sailing (`?lat=…`) has all four instruments; rounds use what you own; the tutorial gives hand + kamal (quadrant is bought, per DESIGN §5).
+
 ## Decisions
 - Real star data (HYG v4.x, mag ≤ 5.0), J2000, no precession/refraction.
 - HYG license confirmed CC BY-SA 4.0 (astronexus.com/projects/hyg). Attribute in credits; share-alike likely covers the derived `stars.json`. GitHub mirror is frozen; canonical source is codeberg.org/astronexus/hyg (blocked from the cloud container — download from astronexus.com or have Colin drop the CSV in).
@@ -108,6 +118,9 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 - Daytime spawns: wait for night (anchor fast-forward) until the noon-sun sight exists?
 
 ## Known bugs / rough edges
+- M6: the economy, cloud frequency and chronometer difficulty are untested by a human. Timing a star's highest point is fiddly (it's flat at the top); ±5 game-min = ±1.25° of longitude.
+- M6: no longitude ruler on the chart: you work out longitude from the chronometer and keep it in your head (or mark DR). Could add later.
+- M6: the almanac box on the chart covers the latitude labels on the right edge.
 - M4a: **longest voyages are long**: worst-case trips (farthest island, through the doldrums, tacking upwind) take 6–20 real minutes even at full ×8 warp (voyage test prints them). M4b round targets should be chosen to keep typical trips ~3–6 min, or raise MAX_WARP in open water. Colin's call.
 - M4a: islands visible only within ~650 m (by design, see Decisions). Might feel too short; it's one constant.
 - M4a: no shallow-water colour around islands; the reef is only readable by its coral heads.
@@ -128,6 +141,13 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 - No Milky Way (DESIGN: only if cheap). Skipped for now.
 
 ## Playtest notes (Colin)
+### M6: please answer these
+`http://localhost:5173/` → title → New voyage. Play until you can buy the chronometer.
+1. How long did it take? (target 30–60 min including the tutorial)
+2. Did the pay feel fair? Too slow, too fast?
+3. Sound: good, annoying, or broken? (I couldn't hear it)
+4. Did you manage a longitude with the chronometer + almanac, or was it baffling?
+
 ### M5: please answer these (the milestone's real test)
 `http://localhost:5173/?step=1`. Best: hand it to someone who hasn't seen the game and don't help them.
 1. Where did they get stuck, and for how long?

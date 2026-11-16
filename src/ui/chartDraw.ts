@@ -47,7 +47,7 @@ function compassRose(c: CanvasRenderingContext2D, x: number, y: number, r: numbe
 }
 
 export interface ChartIsland { name: string; latDeg: number; lonDeg: number }
-export interface ChartView { W: number; H: number; spanDeg: number; ruleLat: number | null; known: ChartIsland[]; orders: string | null }
+export interface ChartView { W: number; H: number; spanDeg: number; ruleLat: number | null; known: ChartIsland[]; orders: string | null; almanac: string[] | null }
 
 export function drawChart(c: CanvasRenderingContext2D, dr: DrState, v: ChartView): void {
   const { W, H, spanDeg } = v;
@@ -118,6 +118,8 @@ export function drawChart(c: CanvasRenderingContext2D, dr: DrState, v: ChartView
     c.textAlign = 'left';
   }
 
+  if (v.almanac?.length) drawAlmanac(c, W, v.almanac);
+
   compassRose(c, 90, H - 100, 52); // bottom-left: clear of the latitude labels on the right
 
   if (v.ruleLat !== null) drawRuler(c, W, Y(v.ruleLat), v.ruleLat);
@@ -140,4 +142,17 @@ function drawRuler(c: CanvasRenderingContext2D, W: number, y: number, lat: numbe
   c.fillRect(W / 2 - lw / 2, y - 30, lw, 24); c.strokeRect(W / 2 - lw / 2, y - 30, lw, 24);
   c.fillStyle = RUST; c.fillText(label, W / 2, y - 12);
   c.restore();
+}
+
+/** Almanac card (right side): home time each star crosses the home meridian tonight. */
+function drawAlmanac(c: CanvasRenderingContext2D, W: number, lines: string[]): void {
+  const x = W - 250, y = 74, w = 230, h = 54 + lines.length * 19;
+  c.fillStyle = 'rgba(251, 240, 214, 0.93)'; c.strokeStyle = RUST; c.lineWidth = 1;
+  c.fillRect(x, y, w, h); c.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  c.fillStyle = RUST; c.font = 'bold 14px Georgia, serif'; c.textAlign = 'left';
+  c.fillText('Almanac: home meridian passage', x + 10, y + 20);
+  c.fillStyle = INK; c.font = 'italic 12px Georgia, serif';
+  c.fillText('4 min earlier where you are = 1° east', x + 10, y + 37);
+  c.font = '14px ui-monospace, Consolas, monospace';
+  lines.forEach((l, i) => c.fillText(l, x + 12, y + 58 + i * 19));
 }

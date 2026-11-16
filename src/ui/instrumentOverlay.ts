@@ -4,8 +4,8 @@
 
 import { handCount } from '../nav/instruments';
 
-export type InstrumentId = 'hand' | 'kamal' | 'quadrant';
-export const INSTRUMENT_NAMES: Record<InstrumentId, string> = { hand: 'Hand', kamal: 'Kamal', quadrant: 'Quadrant' };
+export type InstrumentId = 'hand' | 'kamal' | 'quadrant' | 'chronometer';
+export const INSTRUMENT_NAMES: Record<InstrumentId, string> = { hand: 'Hand', kamal: 'Kamal', quadrant: 'Quadrant', chronometer: 'Chronometer' };
 
 /** Projects a sky direction to screen pixels; null if behind the camera. */
 export type Projector = (azDeg: number, altDeg: number) => { x: number; y: number } | null;
@@ -19,6 +19,7 @@ export interface OverlayInput {
   kamalKnotLabel: string;
   quadrantReadingDeg: number;
   quadrantSwingDeg: number;
+  homeHour: number; // chronometer: home time, 0..24
 }
 
 export class InstrumentOverlay {
@@ -39,6 +40,7 @@ export class InstrumentOverlay {
     this.clear();
     if (o.instrument === 'hand') this.hand(o);
     else if (o.instrument === 'kamal') this.kamal(o);
+    else if (o.instrument === 'chronometer') this.chronometer(o);
     else this.quadrant(o);
   }
 
@@ -116,6 +118,46 @@ export class InstrumentOverlay {
     c.fillStyle = 'rgba(255, 245, 225, 0.95)'; c.font = 'bold 22px Georgia, serif';
     c.fillText(`${o.quadrantReadingDeg.toFixed(1)}°`, ox - R - 10, oy - 12);
     this.caption('Quadrant: put the star on the sight line. The plumb bob swings with the boat; read between swings.');
+  }
+
+  /** Pocket chronometer (home time) + your meridian drawn on the sky, due north and due south. */
+  private chronometer(o: OverlayInput): void {
+    const c = this.ctx;
+    c.setLineDash([6, 6]); c.lineWidth = 1.5; c.strokeStyle = 'rgba(255, 215, 140, 0.7)';
+    for (const az of [0, 180]) {
+      c.beginPath();
+      let started = false;
+      for (let alt = 0; alt <= 88; alt += 2) {
+        const p = o.project(az, alt);
+        if (!p) { started = false; continue; }
+        if (started) c.lineTo(p.x, p.y); else { c.moveTo(p.x, p.y); started = true; }
+      }
+      c.stroke();
+      const lbl = o.project(az, 3);
+      if (lbl) { c.fillStyle = 'rgba(255, 215, 140, 0.9)'; c.font = 'italic 13px Georgia, serif'; c.fillText(az ? 'meridian (S)' : 'meridian (N)', lbl.x + 6, lbl.y); }
+    }
+    c.setLineDash([]);
+    // The watch, bottom right: brass case, paper dial, hands, digits for the impatient.
+    const R = 70, cx = window.innerWidth - 110, cy = window.innerHeight - 190;
+    c.fillStyle = '#b07a26'; c.beginPath(); c.arc(cx, cy, R + 8, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#f6e8c6'; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#3a2414'; c.lineWidth = 1;
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2, len = i % 5 ? 4 : 9;
+      c.beginPath(); c.moveTo(cx + Math.sin(a) * R, cy - Math.cos(a) * R); c.lineTo(cx + Math.sin(a) * (R - len), cy - Math.cos(a) * (R - len)); c.stroke();
+    }
+    const h = o.homeHour % 12, m = (o.homeHour * 60) % 60;
+    const hand = (frac: number, len: number, w: number) => {
+      const a = frac * Math.PI * 2;
+      c.lineWidth = w; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(a) * len, cy - Math.cos(a) * len); c.stroke();
+    };
+    hand(h / 12, R * 0.5, 4); hand(m / 60, R * 0.82, 2.5);
+    const hh = Math.floor(o.homeHour), mm = Math.floor(m);
+    c.fillStyle = '#3a2414'; c.font = 'bold 15px Georgia, serif'; c.textAlign = 'center';
+    c.fillText(`${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`, cx, cy + R * 0.45);
+    c.font = 'italic 11px Georgia, serif'; c.fillText('home time', cx, cy - R * 0.35);
+    c.textAlign = 'start';
+    this.caption('Chronometer: note the home time a star crosses your meridian (highest point). Compare with the almanac on the chart.');
   }
 
   private caption(text: string): void {

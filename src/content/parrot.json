@@ -230,5 +230,9 @@
   ],
   "tutorial.step10.done": [
     "No more hints. You're on your own. Try not to embarrass me."
+  ],
+  "chronometer.first": [
+    "Home time, kept honest. Watch a star cross due south. Check the almanac. Four minutes early is one degree east.",
+    "The chronometer. Time a star at its highest. Compare with the almanac on the chart. Longitude, finally."
   ]
 }

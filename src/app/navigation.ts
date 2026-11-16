@@ -13,7 +13,7 @@ import type { Dialogue } from '../ui/dialogue';
 import { mulberry32 } from '../util/rng';
 
 const LOG_GLASS_S = 4; // real seconds the sandglass runs
-const KEYS: Record<string, InstrumentId> = { Digit1: 'hand', Digit2: 'kamal', Digit3: 'quadrant' };
+const KEYS: Record<string, InstrumentId> = { Digit1: 'hand', Digit2: 'kamal', Digit3: 'quadrant', Digit4: 'chronometer' };
 
 export interface NavFrame {
   mode: string;
@@ -26,13 +26,14 @@ export interface NavFrame {
   lookAltDeg: number;
   hullPitchDeg: number;
   hullRollDeg: number;
+  homeHour: number;        // game clock (home time), for the chronometer
   project: Projector;
 }
 
 export class Navigation {
   dr: DrState;
   instrument: InstrumentId = 'hand';
-  available = new Set<InstrumentId>(['hand', 'kamal', 'quadrant']);
+  available = new Set<InstrumentId>(['hand', 'kamal', 'quadrant', 'chronometer']); // free sailing: everything; rounds/tutorial narrow it
   raised = false;
   compassDeg = 0;
   quadrantDeg = 0;
@@ -44,6 +45,7 @@ export class Navigation {
   private readonly tape = new CompassTape();
   readonly chart = new Chart();
   private chartSeen = false;
+  private chronoSeen = false;
   /** The E that opened the chart must be released before E can close it (same-frame bug). */
   private chartCloseArmed = false;
 
@@ -125,12 +127,13 @@ export class Navigation {
     if (f.mode === 'helm') this.tape.draw(this.compassDeg);
 
     const canRaise = f.mode !== 'chart' && this.available.has(this.instrument);
+    if (this.raised && canRaise && this.instrument === 'chronometer' && !this.chronoSeen) { this.chronoSeen = true; this.dialogue.say('chronometer.first', f.nowS); }
     if (this.raised && canRaise) {
       this.quadrantDeg = quadrantReadingDeg(f.lookAltDeg, f.hullPitchDeg, f.hullRollDeg, f.nowS);
       this.overlay.draw({
         instrument: this.instrument, lookAzDeg: f.lookAzDeg, lookAltDeg: f.lookAltDeg, project: f.project,
         kamalKnotDeg: this.kamalKnotDeg, kamalKnotLabel: this.kamalKnotLabel, quadrantReadingDeg: this.quadrantDeg,
-        quadrantSwingDeg: Math.sin(f.nowS * 2.3) * 0.35 * f.hullPitchDeg,
+        quadrantSwingDeg: Math.sin(f.nowS * 2.3) * 0.35 * f.hullPitchDeg, homeHour: f.homeHour,
       });
     } else this.overlay.clear();
 

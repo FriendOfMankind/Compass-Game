@@ -23,6 +23,8 @@ export class Chart {
   private ruleLat: number | null = null; // ruler being dragged
   known: ChartIsland[] = [];
   orders: string | null = null;
+  /** Almanac lines (with a chronometer), or null. */
+  almanac: string[] | null = null;
 
   constructor() {
     this.root.id = 'chart';
@@ -90,6 +92,6 @@ export class Chart {
     if (this.canvas.width !== Math.round(r.width * dpr)) { this.canvas.width = Math.round(r.width * dpr); }
     if (this.canvas.height !== Math.round(r.height * dpr)) { this.canvas.height = Math.round(r.height * dpr); }
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawChart(this.ctx, dr, { W: r.width, H: r.height, spanDeg: this.spanDeg, ruleLat: this.ruleLat, known: this.known, orders: this.orders });
+    drawChart(this.ctx, dr, { W: r.width, H: r.height, spanDeg: this.spanDeg, ruleLat: this.ruleLat, known: this.known, orders: this.orders, almanac: this.almanac });
   }
 }
