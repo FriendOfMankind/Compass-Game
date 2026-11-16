@@ -16,11 +16,9 @@ export class Dialogue {
 
   constructor(seed: number) {
     this.rnd = mulberry32(seed ^ 0xb15c);
-    Object.assign(this.el.style, {
-      position: 'fixed', left: '24px', bottom: '90px', maxWidth: '420px', padding: '10px 14px',
-      background: 'rgba(250, 240, 215, 0.94)', color: '#2a1d10', borderRadius: '14px 14px 14px 2px',
-      font: '16px/1.4 Georgia, serif', boxShadow: '0 3px 10px rgba(0,0,0,0.45)', display: 'none', pointerEvents: 'none',
-    } satisfies Partial<CSSStyleDeclaration>);
+    this.el.id = 'parrot';
+    this.el.className = 'parch';
+    this.el.style.display = 'none';
     document.body.appendChild(this.el);
   }
 
@@ -46,8 +44,8 @@ export class Dialogue {
     if (!next) { this.el.style.display = 'none'; return; }
     this.el.innerHTML = '';
     const who = document.createElement('div');
-    Object.assign(who.style, { font: 'bold 12px Georgia, serif', letterSpacing: '0.05em', color: '#8a4b1f', marginBottom: '2px' });
-    who.textContent = SPEAKER.toUpperCase();
+    who.className = 'parch-label';
+    who.textContent = SPEAKER;
     const text = document.createElement('div');
     text.textContent = next;
     this.el.append(who, text);

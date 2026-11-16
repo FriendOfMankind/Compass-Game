@@ -38,3 +38,13 @@ export const markPosition = (s: DrState): DrState => ({ ...s, marks: [...s.marks
 /** The player takes a fix (e.g. from a latitude sight): DR restarts from here. */
 export const setFix = (s: DrState, fix: LatLon): DrState => ({ ...s, pos: { ...fix }, track: [...s.track, { ...fix }] });
 export const addLatLine = (s: DrState, latDeg: number): DrState => ({ ...s, latLines: [...s.latLines, latDeg] });
+export const undoLatLine = (s: DrState): DrState => ({ ...s, latLines: s.latLines.slice(0, -1) });
+
+/**
+ * Chart ruler: screen y (CSS px, 0 = top) → latitude, snapped to 0.1°.
+ * The chart is a flat projection centred on centreLatDeg showing spanDeg vertically (DESIGN §6).
+ */
+export function rulerLatitude(yPx: number, heightPx: number, centreLatDeg: number, spanDeg: number): number {
+  const lat = centreLatDeg + (heightPx / 2 - yPx) * (spanDeg / heightPx);
+  return Math.round(Math.max(-90, Math.min(90, lat)) * 10) / 10;
+}

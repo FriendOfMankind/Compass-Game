@@ -1,13 +1,15 @@
 # progress.md
 
 ## Current milestone
-M3: Instruments & navigation + tutorial (sky steps): BUILT, awaiting Colin's playtest. Next: M4 (world: islands, ports, trade winds + tutorial steps 7, 8, 10).
+M3.5: Look & feel: BUILT, awaiting Colin's verdict ("looks better and clearer?") + an FPS check on his machine (shadows are new).
+M3 playtest answers are still outstanding. Next: M4 (world: islands, ports, trade winds + tutorial steps 7, 8, 10). M4 islands use the Kenney kit.
 
 ### Session handoff (2026-11-16)
 - Last thing fixed: chart table wouldn't open (the E that opened it also closed it in the same frame). Fixed in `src/app/navigation.ts` (`chartCloseArmed`), verified in-browser: E opens, E closes, E reopens, Esc closes.
 - Colin's M3 playtest is only partial: he reported the chart bug, nothing else yet. Before starting M4, ask for the M3 playtest answers below (tutorial confusion, parrot laughs, instrument progression, chart usefulness).
 - Colin is on Windows PowerShell 5.1: give commands one per block, no `&&`. He runs `git pull` then `npm run dev`.
 - Git: commits authored as Claude <noreply@anthropic.com> (history was rewritten once with Colin's approval). Remote: github.com/FriendOfMankind/Compass-Game, branch `main`.
+- Kenney Pirate Kit (CC0) lives in `public/models/kenney-pirate/` (GLB + `Textures/colormap.png`, which every model references). Colin downloaded it; the cloud container can't reach kenney.nl.
 - Throwaway Playwright drivers used for interaction checks: pattern = start Vite via `createServer`, load `?debug=1`, inspect `window.__game`. Recreate as needed (they lived in the session scratchpad).
 
 ## Done
@@ -47,6 +49,14 @@ M3: Instruments & navigation + tutorial (sky steps): BUILT, awaiting Colin's pla
   - Always-on centre reticle (look checks and sights measure from it). Debug: `window.__game` handle with `?debug=1` for Playwright probes.
   - Verified in a real (headless) browser: step 5 → 6 → raise hand → quiz → correct answer → step 9 teleport south.
 
+- **M3.5: Look & feel (built, awaiting Colin's verdict)**: no gameplay changes; before/after shots in `shots/before-*` vs `shots/after-*` (local).
+  - Kit test: Kenney ships are toy-proportioned and unusable from their own deck (the sail fills the screen), so we keep our sloop. The kit is for islands, props and distant ships.
+  - Lighting (`render/lighting.ts`): sun follows the real sun direction and casts PCF-soft shadows (2048 map, 18 m frustum following the boat); hemisphere fill; Neutral tone mapping; warm lantern on the mast fades in at night.
+  - Ship split into `shipHull.ts` (strake-textured hull, planked deck, cap rail), `shipRig.ts` (mast, sail with cloth seams, shrouds/forestay), `shipProps.ts` (8-spoke wheel, **3D brass binnacle whose card shows the compass READING**, chart table, mast lantern, Kenney barrels + crate via `render/models.ts`). Palette sampled from the Kenney colormap (`render/palette.ts`); canvas textures in `render/textures.ts`.
+  - UI (`ui/theme.css`): one parchment/ink/brass style for the parrot, tutorial card, quiz, compass tape and chart. Font: IM Fell English SC (Google Fonts) for labels, Georgia body.
+  - Control hints are key-cap chips that fade after 3 uses each; station prompts and "Click to look around" stay; H shows all hints again (`ui/prompt.ts`, `app/controls.ts`). Status line (sail warnings, log, warp) above them.
+  - Chart: parchment, compass rose, tool buttons. **Latitude lines are ruled by dragging a ruler** (live 0.1° label, release to rule, right-click/Esc cancels), "Erase last line" undoes. Typed input removed. Pure `rulerLatitude()` + `undoLatLine()` in `nav/dr.ts`, tested.
+
 ## Decisions
 - Real star data (HYG v4.x, mag ≤ 5.0), J2000, no precession/refraction.
 - HYG license confirmed CC BY-SA 4.0 (astronexus.com/projects/hyg). Attribute in credits; share-alike likely covers the derived `stars.json`. GitHub mirror is frozen; canonical source is codeberg.org/astronexus/hyg (blocked from the cloud container — download from astronexus.com or have Colin drop the CSV in).
@@ -65,6 +75,10 @@ M3: Instruments & navigation + tutorial (sky steps): BUILT, awaiting Colin's pla
 - Daytime spawns: wait for night (anchor fast-forward) until the noon-sun sight exists?
 
 ## Known bugs / rough edges
+- M3.5: shadows cost GPU; unverified on real hardware (headless runs SwiftShader). If FPS drops, halve the shadow map (`render/lighting.ts`).
+- M3.5: the IM Fell font loads from Google Fonts; offline it falls back to Georgia (fine).
+- M3.5: the binnacle card is unlit (always readable at night). Real binnacles had a lamp, so it's defensible, but it is a bright spot while star-gazing.
+- M3.5: the helm view shows up to 8 hint chips until they've faded. Watch whether that feels cluttered.
 - Looking abeam on a heeled boat shifts your view ~5–7° (measured: camera pitch 12° → 17.6° actual). Correct physics, but it makes "look at the star" fiddly; the reticle + 4° tolerance cover it. Watch in playtest.
 - Tutorial step 9 teleports you from 12°N to 12°S between steps (story jump, "crossing the line"). Real crossing comes with M4's world.
 - FIXED: chart table opened and instantly closed on the same E press.
@@ -78,6 +92,13 @@ M3: Instruments & navigation + tutorial (sky steps): BUILT, awaiting Colin's pla
 - No Milky Way (DESIGN: only if cheap). Skipped for now.
 
 ## Playtest notes (Colin)
+### M3.5: please answer these
+`git pull`, `npm run dev`, then: `/?at=helm&time=10&heading=90&lat=12&debug=1` (day), `/?at=helm&lat=15&time=21&debug=1` (night), walk to the chart table and drag a latitude line, `/?step=1`.
+1. Better-looking? Anything that looks worse than before?
+2. FPS in the debug HUD (top-left): what number, day vs night?
+3. Are the fading hint chips clear, or cluttered?
+4. Ruler on the chart: intuitive without being told?
+
 ### M3: please answer these
 Try the tutorial from the top: `/?step=1`. Then free-sail at night: `/?at=helm&lat=15&time=21&debug=1`, measure Polaris with all three instruments (1/2/3, hold right-click), throw the log (L), open the chart table (walk to the table on the left, E).
 1. Did any tutorial step confuse you or get stuck? Which?

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   compassDeviationDeg, compassReadingDeg, handCount, kamalVerdict, logReadingKn, quadrantReadingDeg, toKnots,
 } from '../src/nav/instruments';
-import { addLatLine, createDr, logSpeed, markPosition, setFix, stepDr } from '../src/nav/dr';
+import { addLatLine, createDr, logSpeed, markPosition, rulerLatitude, setFix, stepDr, undoLatLine } from '../src/nav/dr';
 import { mulberry32 } from '../src/util/rng';
 
 describe('instruments', () => {
@@ -86,14 +86,19 @@ describe('dead reckoning', () => {
   });
 });
 
-describe('chart latitude input', async () => {
-  const { parseLatitude } = await import('../src/ui/chart');
-  it('parses N/S and signs', () => {
-    expect(parseLatitude('14')).toBe(14);
-    expect(parseLatitude('14N')).toBe(14);
-    expect(parseLatitude('6 s')).toBe(-6);
-    expect(parseLatitude('-6.5')).toBe(-6.5);
-    expect(parseLatitude('north')).toBeNull();
-    expect(parseLatitude('95')).toBeNull();
+describe('chart ruler', () => {
+  it('maps screen y to latitude, snapped to 0.1°', () => {
+    // 800 px tall chart, 8° span centred on 15°N → 100 px per degree.
+    expect(rulerLatitude(400, 800, 15, 8)).toBe(15);
+    expect(rulerLatitude(0, 800, 15, 8)).toBe(19);
+    expect(rulerLatitude(800, 800, 15, 8)).toBe(11);
+    expect(rulerLatitude(437, 800, 15, 8)).toBe(14.6); // 14.63 → 14.6
+    expect(rulerLatitude(-1e6, 800, 15, 8)).toBe(90);
+  });
+  it('undo removes only the last latitude line', () => {
+    let s = addLatLine(addLatLine(createDr({ latDeg: 0, lonDeg: 0 }), 12), 14.5);
+    s = undoLatLine(s);
+    expect(s.latLines).toEqual([12]);
+    expect(undoLatLine(undoLatLine(s)).latLines).toEqual([]);
   });
 });

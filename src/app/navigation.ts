@@ -3,11 +3,12 @@
 import {
   compassDeviationDeg, compassReadingDeg, DEFAULT_KAMAL_KNOTS_DEG, logReadingKn, quadrantReadingDeg,
 } from '../nav/instruments';
-import { addLatLine, createDr, logSpeed, markPosition, setFix, stepDr, type DrState, type LatLon } from '../nav/dr';
+import { addLatLine, createDr, logSpeed, markPosition, setFix, stepDr, undoLatLine, type DrState, type LatLon } from '../nav/dr';
 import { InstrumentOverlay, INSTRUMENT_NAMES, type InstrumentId, type Projector } from '../ui/instrumentOverlay';
 import { CompassTape } from '../ui/compassTape';
 import { Chart } from '../ui/chart';
 import type { Input } from '../ui/input';
+import type { Hint } from '../ui/prompt';
 import type { Dialogue } from '../ui/dialogue';
 import { mulberry32 } from '../util/rng';
 
@@ -76,6 +77,7 @@ export class Navigation {
     this.chart.open(this.dr, {
       mark: () => { this.dr = markPosition(this.dr); this.chart.update(this.dr); },
       addLatLine: (lat) => { this.dr = addLatLine(this.dr, lat); this.chart.update(this.dr); },
+      undoLatLine: () => { this.dr = undoLatLine(this.dr); this.chart.update(this.dr); },
       close: () => { this.chart.close(); this.onChartClose(); },
     });
     if (!this.chartSeen) { this.chartSeen = true; this.dialogue.say('chart.first', 0); }
@@ -89,12 +91,13 @@ export class Navigation {
     }
     if (this.chart.isOpen) {
       if (!this.chartCloseArmed) this.chartCloseArmed = !input.down('KeyE');
+      else if (input.pressed('Escape') && this.chart.ruling) this.chart.cancelRuler();
       else if (input.pressed('Escape') || input.pressed('KeyE')) { this.chart.close(); this.onChartClose(); }
     }
   }
 
-  /** Returns extra prompt text for this frame. */
-  update(f: NavFrame): string {
+  /** Returns the nav part of the bottom HUD: status text + instrument/log hints. */
+  update(f: NavFrame): { status: string; hints: Hint[] } {
     this.compassDeg = compassReadingDeg(f.trueHeadingDeg, this.deviationDeg, f.yawRateDeg, f.nowS);
     this.dr = stepDr(this.dr, this.compassDeg, f.simDt);
     if (this.chart.isOpen) this.chart.update(this.dr);
@@ -106,9 +109,9 @@ export class Navigation {
         this.dr = logSpeed(this.dr, logReadingKn(f.speedMs, this.rnd()));
         this.logDoneAtS = null;
         this.dialogue.say('log.result', f.nowS, 5);
-      } else extra = `log line out… sandglass ${Math.ceil(left)}`;
+      } else extra = `Log line out… sandglass ${'▮'.repeat(Math.ceil(left))}`;
     }
-    if (this.dr.speedKn !== null && !extra) extra = `log: ${this.dr.speedKn.toFixed(1)} kn`;
+    if (this.dr.speedKn !== null && !extra) extra = `Log: ${this.dr.speedKn.toFixed(1)} knots`;
 
     this.tape.visible = f.mode === 'helm';
     if (f.mode === 'helm') this.tape.draw(this.compassDeg);
@@ -123,9 +126,11 @@ export class Navigation {
       });
     } else this.overlay.clear();
 
-    const inst = Object.entries(KEYS).filter(([, id]) => this.available.has(id))
-      .map(([code, id]) => `${code.slice(-1)} ${INSTRUMENT_NAMES[id]}${id === this.instrument ? '*' : ''}`).join('  ');
-    const parts = [extra, inst && `right-click raise: ${inst}`, 'L log'].filter(Boolean);
-    return parts.join('    ·    ');
+    const hints: Hint[] = [];
+    const ids = Object.entries(KEYS).filter(([, id]) => this.available.has(id));
+    if (this.available.has(this.instrument)) hints.push({ id: 'raise', keys: ['Right-click'], label: `hold: raise ${INSTRUMENT_NAMES[this.instrument].toLowerCase()}` });
+    if (ids.length > 1) hints.push({ id: 'switch', keys: ids.map(([code]) => code.slice(-1)), label: 'switch instrument', codes: ids.map(([code]) => code) });
+    hints.push({ id: 'log', keys: ['L'], label: 'throw the log', codes: ['KeyL'] });
+    return { status: extra, hints };
   }
 }

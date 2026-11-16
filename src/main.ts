@@ -21,6 +21,8 @@ import { Choice } from './ui/choice';
 import { toKnots } from './nav/instruments';
 import { Navigation } from './app/navigation';
 import { TutorialRunner } from './tutorial/runner';
+import { controlsFor } from './app/controls';
+import './ui/theme.css';
 import type { StepSetup } from './tutorial/steps';
 import type { InstrumentId } from './ui/instrumentOverlay';
 
@@ -79,6 +81,7 @@ let waveTime = 0;
 let simAccum = 0;
 const pose = { h: 0, pitch: 0, roll: 0 };
 const nag = { irons: 0, luff: 0, southLook: 0 }; // seconds each parrot-worthy condition has held
+let wasRaised = false;
 
 const input = new Input();
 const prompt = new Prompt();
@@ -148,19 +151,6 @@ function handleKeys(): void {
   mode = st.id;
   player = { ...STATION_STAND[st.id] };
   if (st.id === 'chart') nav.openChart();
-}
-
-function promptText(tel: ReturnType<typeof telemetry>, navLine: string): string {
-  if (mode === 'chart') return '';
-  const warpLine = warp.warp > 1.05 ? `\nmaking way  ≫ ×${warp.warp.toFixed(1)}` : '';
-  const sailLine = tel.twaDeg < 38 ? 'in irons: bow is in the wind'
-    : tel.luffing ? 'sail is luffing: sheet in (W)'
-    : tel.efficiency < 0.75 ? 'sail is over-sheeted: ease out (S)' : '';
-  const nl = `\n${navLine}`;
-  if (mode === 'helm') return `A / D  steer    ·    W / S  trim sail    ·    C  star chart    ·    E  let go${sailLine ? `\n${sailLine}` : ''}${nl}${warpLine}`;
-  if (mode === 'mast') return `W  sheet in    ·    S  ease out    ·    E  let go\n${sailLine || 'sail is drawing nicely'}${nl}`;
-  const st = nearestStation(player);
-  return (st ? `E  ${st.label}` : 'WASD walk  ·  mouse look  (click to capture mouse)') + nl;
 }
 
 /** Occasional parrot remarks for things the player keeps doing. */
@@ -238,8 +228,16 @@ function frame(nowMs: number): void {
     hullPitchDeg: THREE.MathUtils.radToDeg(pose.pitch), hullRollDeg: THREE.MathUtils.radToDeg(pose.roll), project,
   };
   nav.handleInput(input, navFrame);
-  const navLine = nav.update(navFrame);
-  prompt.set(promptText(tel, navLine));
+  const navUi = nav.update(navFrame);
+  const ui = controlsFor({
+    mode, nearStationLabel: mode === 'deck' ? nearestStation(player)?.label ?? null : null,
+    mouseCaptured: document.pointerLockElement === renderer.domElement,
+    twaDeg: tel.twaDeg, luffing: tel.luffing, efficiency: tel.efficiency, warp: warp.warp,
+    navStatus: navUi.status, navHints: navUi.hints,
+  });
+  if (nav.raised && !wasRaised) prompt.use('raise');
+  wasRaised = nav.raised;
+  prompt.set(ui.status, ui.hints, input);
 
   tutorial?.update({
     mode, compassDeg: nav.compassDeg, speedKn: toKnots(boat.speedMs), efficiency: tel.efficiency, luffing: tel.luffing,

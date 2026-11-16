@@ -25,11 +25,8 @@ export class TutorialRunner {
   constructor(startN: number, private readonly host: TutorialHost, private readonly dialogue: Dialogue, private readonly choice: Choice) {
     const i = stepIndex(startN);
     this.stepI = i >= 0 ? i : 0;
-    Object.assign(this.goalEl.style, {
-      position: 'fixed', top: '74px', right: '16px', maxWidth: '320px', padding: '8px 12px',
-      background: 'rgba(20, 14, 8, 0.7)', color: '#fff3d6', borderLeft: '3px solid #e0a64a',
-      font: '14px/1.4 Georgia, serif', pointerEvents: 'none',
-    } satisfies Partial<CSSStyleDeclaration>);
+    this.goalEl.id = 'goal-card';
+    this.goalEl.className = 'parch';
     document.body.appendChild(this.goalEl);
     this.enterStep(true);
   }
@@ -53,7 +50,7 @@ export class TutorialRunner {
     this.hinted = false;
     this.host.setOverlay({ ...NO_OVERLAY, ...this.goal.overlay });
     const step = STEPS[this.stepI];
-    this.goalEl.innerHTML = `<div style="font-size:11px;letter-spacing:.08em;color:#e0a64a">STEP ${step.n} · ${step.title.toUpperCase()}</div>${this.goal.text}`;
+    this.goalEl.innerHTML = `<div class="parch-label">Step ${step.n} · ${step.title}</div>${keycaps(this.goal.text)}`;
   }
 
   update(c: TutorialCtx, nowS: number, dt: number): void {
@@ -94,6 +91,15 @@ export class TutorialRunner {
     this.dialogue.say('tutorial.end', nowS);
     this.host.setInstruments(['hand', 'kamal', 'quadrant']);
     this.host.setOverlay(NO_OVERLAY);
-    this.goalEl.innerHTML = '<div style="font-size:11px;letter-spacing:.08em;color:#e0a64a">TUTORIAL COMPLETE</div>Free sailing. Kamal (2) and quadrant (3) unlocked. C shows the star chart.';
+    this.goalEl.innerHTML = `<div class="parch-label">Tutorial complete</div>${keycaps('Free sailing. Kamal (2) and quadrant (3) unlocked. C shows the star chart.')}`;
   }
+}
+
+/** Render single-key references in goal text as key caps: "(A/D)", "(2)", "press E", "W sheets in". */
+export function keycaps(text: string): string {
+  return text
+    .replace(/\(([A-Z0-9])\/([A-Z0-9])\)/g, '<kbd>$1</kbd>/<kbd>$2</kbd>')
+    .replace(/\(([A-Z0-9])\)/g, '<kbd>$1</kbd>')
+    .replace(/\bpress ([A-Z])\b/g, 'press <kbd>$1</kbd>')
+    .replace(/\b([A-Z]) (sheets|eases|shows)\b/g, '<kbd>$1</kbd> $2');
 }
