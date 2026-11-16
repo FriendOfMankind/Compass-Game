@@ -13,6 +13,8 @@ export class Dialogue {
   private readonly lastUsed = new Map<string, number>(); // key → time said
   private readonly lastVariant = new Map<string, number>();
   private readonly rnd: () => number;
+  /** Called whenever a new line appears (the squawk). */
+  onLine: (() => void) | null = null;
 
   constructor(seed: number) {
     this.rnd = mulberry32(seed ^ 0xb15c);
@@ -50,6 +52,7 @@ export class Dialogue {
     text.textContent = next;
     this.el.append(who, text);
     this.el.style.display = 'block';
+    this.onLine?.();
     this.showingUntil = now + 2200 + next.length * 55;
   }
 }

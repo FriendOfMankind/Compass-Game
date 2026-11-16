@@ -15,6 +15,7 @@ import { Water } from './render/water';
 import { Ship, DECK_Y } from './render/ship';
 import { Lighting } from './render/lighting';
 import { Clouds } from './render/clouds';
+import { Sound } from './audio/sound';
 import { Input } from './ui/input';
 import { Prompt } from './ui/prompt';
 import { Dialogue } from './ui/dialogue';
@@ -101,8 +102,11 @@ const dialogue = new Dialogue(scenario.seed);
 const choice = new Choice();
 const hud = scenario.debug ? new DebugHud() : null;
 const nags = new ParrotNags(dialogue);
+const sound = new Sound();
+dialogue.onLine = () => sound.squawk();
 const worldSim = new WorldSim(scenario.seed, dialogue);
 scene.add(worldSim.islands.group);
+worldSim.sfx = sound;
 boat = worldSim.clearSpawn(boat);
 let blockWarp = false;
 const camWorld = new THREE.Vector3();
@@ -174,6 +178,8 @@ function islandDebug(): string {
 const uiBlocked = () => nav.chart.isOpen || choice.isOpen || harbour.isOpen;
 
 function handleKeys(): void {
+  if (input.pressed('KeyM')) worldSim.toast.show(sound.toggleMute() ? 'Sound off' : 'Sound on', 'Press M to toggle.', performance.now() / 1000, 2);
+  if (input.pressed('KeyL') && mode !== 'chart') sound.splash();
   if (input.pressed('KeyC')) celestial.overlay = celestial.overlay === FULL_OVERLAY ? NO_OVERLAY : FULL_OVERLAY;
   if (mode === 'chart' || !input.pressed('KeyE') || uiBlocked()) return;
   if (mode !== 'deck') { mode = 'deck'; return; }
@@ -274,6 +280,7 @@ function frame(nowMs: number): void {
   }, nowS, dt);
   nags.update({ mode, twaDeg: tel.twaDeg, luffing: tel.luffing, ...look, latDeg, sunAltDeg: celestial.lastSunAltDeg }, dt, nowS);
   dialogue.update();
+  sound.update({ speedMs: boat.speedMs, windStrength: wind.strength, luffing: tel.luffing, warp: warp.warp }, dt);
 
   hud?.update(nowMs, {
     latDeg,

@@ -8,6 +8,7 @@ const CREDITS = `
 <p><b>3D models:</b> Pirate Kit by Kenney (kenney.nl), CC0.</p>
 <p><b>Font:</b> IM Fell English SC by Igino Marini, SIL Open Font License.</p>
 <p><b>Engine:</b> three.js (MIT).</p>
+<p>Sound is generated live (Web Audio). Press <kbd>M</kbd> to mute.</p>
 <p>The parrot's opinions are his own.</p>`;
 
 export function showTitle(save: Progress | null, newSeed: number): void {

@@ -22,6 +22,8 @@ export class WorldSim {
   /** Arrival at any island (rounds use it). */
   onArrive: ((isl: Island, nowS: number) => void) | null = null;
   hullScrapes = 0;
+  /** Sound effects hook (set by main once audio exists). */
+  sfx: { crunch(): void; bell(): void } | null = null;
   prox: Proximity | null = null;
   private lastReefS = -99;
   private visited: number | null = null; // island we're currently "at"
@@ -53,6 +55,7 @@ export class WorldSim {
     if (p.onReef && nowS - this.lastReefS > REEF_COOLDOWN_S) {
       this.lastReefS = nowS;
       this.hullScrapes++;
+      this.sfx?.crunch();
       b = { ...b, speedMs: b.speedMs * 0.35 };
       this.dialogue.say('reef.hit', nowS, 8);
     }
@@ -74,6 +77,7 @@ export class WorldSim {
 
   private arrive(isl: Island, nowS: number): void {
     this.visited = isl.id;
+    this.sfx?.bell();
     if (this.onArrive) { this.onArrive(isl, nowS); return; }
     this.toast.show(isl.name, `${isl.port ? 'A port. ' : ''}${isl.blurb}`, nowS);
     this.dialogue.say('island.arrive', nowS, 30);
