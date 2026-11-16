@@ -25,7 +25,11 @@ export function applyHaze(m: THREE.Material): void {
     sh.fragmentShader = sh.fragmentShader
       .replace('void main() {', 'uniform vec3 uHaze; uniform float uHazeNear; uniform float uHazeFar;\nvoid main() {')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uHaze, smoothstep(uHazeNear, uHazeFar, length(vViewPosition)));`);
+        float hazeD = length(vViewPosition);
+        // Past the range: gone. Fading to the horizon colour alone still leaves a pale bump
+        // against the darker sky above the horizon, which gives the island away from miles off.
+        if (hazeD > uHazeFar) discard;
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, uHaze, smoothstep(uHazeNear, uHazeFar, hazeD));`);
   };
   m.customProgramCacheKey = () => 'island-haze';
   m.needsUpdate = true;

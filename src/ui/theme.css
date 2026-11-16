@@ -73,7 +73,7 @@ kbd {
 }
 
 /* Tutorial goal card (top right). */
-#goal-card {
+#goal-card, #orders-card {
   position: fixed; top: 84px; right: 16px; max-width: 320px; padding: 10px 14px 11px;
   pointer-events: none; font-size: 15px;
 }

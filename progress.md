@@ -1,10 +1,12 @@
 # progress.md
 
 ## Current milestone
-M4, split in two (Colin said "keep going" after M3.5 was merged to main):
+**M5: Tutorial & parrot: BUILT** (all 10 steps; graduation hands over to round 1). Acceptance is human-only: "a fresh player completes the tutorial without outside help and laughs at least once". Needs Colin + a guinea pig. Next: M6 (gold + upgrades, cloudy nights, sound, title screen, credits, save).
+
+Previous: M4, split in two (Colin said "keep going" after M3.5 was merged to main; M4 merged to main too):
 - **M4a: the world**: BUILT (islands, wind field, reefs, landing, haze, end-to-end voyage test).
 - **M4b: the loop**: BUILT (rounds, orders, kamal knots, discovered islands on the chart).
-- Tutorial steps 7, 8, 10 moved to M5 (DESIGN lists "all 10 steps" there; they need a scripted tutorial island). Not built.
+- Tutorial steps 7, 8, 10 moved to M5 and built there.
 M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and so are the M3 playtest answers.
 
 ### Session handoff (2026-11-16)
@@ -75,6 +77,17 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
   - Chart: islands you've reached are inked in with their names; orders shown at the top.
   - URLs: a bare URL (or `?seed=N`) plays round 1; `?round=N` jumps; any of `lat/lon/step/at` = free sailing (all older scenario URLs unchanged). `?debug=1` adds `__game.rounds`, `__game.worldSim`, `__game.teleport(lat, lon)`.
 
+- **M5: Tutorial (built)**: steps 7, 8, 10 added; 1–6 and 9 unchanged.
+  - Tutorial island = `world/tutorialIsland.ts`: lowest island ≥ 5°N with clear sea to its south-west (prefers no reef). Tested on 200 seeds.
+  - Step 7 (latitude sailing): teleports south-west of it at night, wind from 160 (north = run, east = reach). Goals: raise the kamal on Polaris → sail north until on the island's latitude (±0.2°, the kamal has a knot labelled with the island) → turn to 090.
+  - Step 8 (dead reckoning): throw the log → open the chart table and mark position → run east until you arrive. Its hint inks the island on the chart (the tutorial's one waypoint, DESIGN §9).
+  - Step 10 (graduation): parrot sends you off; round 1 starts (orders card replaces the goal card).
+  - Warp is allowed only on the two open-water goals (sail north, find the island); `Goal.allowWarp`.
+  - Goal text can say `{island}` / `{islandLat}` (filled from the world). `app/hosts.ts` now holds the tutorial + round hosts (main.ts hands state over as accessors).
+  - Helm stand moved 0.4 m to starboard: sailing north put Polaris exactly behind the mast.
+  - Islands now vanish completely past the haze range (fragment discard): fading to the horizon colour alone left a pale bump against the darker sky.
+  - Verified in-browser: step 8 log → chart mark → arrival → step 9; step 10 → round 1 orders.
+
 ## Decisions
 - Real star data (HYG v4.x, mag ≤ 5.0), J2000, no precession/refraction.
 - HYG license confirmed CC BY-SA 4.0 (astronexus.com/projects/hyg). Attribute in credits; share-alike likely covers the derived `stars.json`. GitHub mirror is frozen; canonical source is codeberg.org/astronexus/hyg (blocked from the cloud container — download from astronexus.com or have Colin drop the CSV in).
@@ -115,6 +128,13 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 - No Milky Way (DESIGN: only if cheap). Skipped for now.
 
 ## Playtest notes (Colin)
+### M5: please answer these (the milestone's real test)
+`http://localhost:5173/?step=1`. Best: hand it to someone who hasn't seen the game and don't help them.
+1. Where did they get stuck, and for how long?
+2. Did they laugh? At what?
+3. Step 7: did the kamal + "sail until Polaris sits on the knot" make sense?
+4. Step 8: did the island appear where they expected?
+
 ### M4: please answer these
 `git pull`, `npm run dev`, open `http://localhost:5173/` (plays round 1; add `?seed=7` etc. for other worlds).
 1. Could you find the target with Polaris + latitude sailing? How long did a round take?

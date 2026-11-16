@@ -10,6 +10,12 @@ export interface TutorialHost {
   applySetup(setup: StepSetup, jump: boolean): void;
   setOverlay(o: SkyOverlay): void;
   setInstruments(ids: string[]): void;
+  /** Fill {island} / {islandLat} in goal text. */
+  fill(text: string): string;
+  /** Ink the tutorial island on the chart (the one waypoint the tutorial gives). */
+  revealIsland(): void;
+  /** Tutorial over: rounds can begin. */
+  finished(): void;
 }
 
 export class TutorialRunner {
@@ -33,6 +39,8 @@ export class TutorialRunner {
 
   get active(): boolean { return !this.finished; }
   get stepN(): number { return STEPS[this.stepI].n; }
+  /** Time warp is off while learning, except on open-water passages. */
+  get allowWarp(): boolean { return !this.finished && !this.asking && (this.goal.allowWarp ?? false); }
 
   private get goal() { return STEPS[this.stepI].goals[this.goalI]; }
 
@@ -50,7 +58,7 @@ export class TutorialRunner {
     this.hinted = false;
     this.host.setOverlay({ ...NO_OVERLAY, ...this.goal.overlay });
     const step = STEPS[this.stepI];
-    this.goalEl.innerHTML = `<div class="parch-label">Step ${step.n} · ${step.title}</div>${keycaps(this.goal.text)}`;
+    this.goalEl.innerHTML = `<div class="parch-label">Step ${step.n} · ${step.title}</div>${keycaps(this.host.fill(this.goal.text))}`;
   }
 
   update(c: TutorialCtx, nowS: number, dt: number): void {
@@ -63,6 +71,7 @@ export class TutorialRunner {
     if (!this.hinted && g.hint && nowS - this.goalStartS > (g.hintAfterS ?? 30)) {
       this.hinted = true;
       this.dialogue.say(g.hint, nowS);
+      if (g.revealOnHint) this.host.revealIsland();
       if (g.hintOverlay) this.host.setOverlay({ ...NO_OVERLAY, ...g.overlay, ...g.hintOverlay });
     }
     this.heldS = g.check(c) ? this.heldS + dt : 0;
@@ -91,7 +100,8 @@ export class TutorialRunner {
     this.dialogue.say('tutorial.end', nowS);
     this.host.setInstruments(['hand', 'kamal', 'quadrant']);
     this.host.setOverlay(NO_OVERLAY);
-    this.goalEl.innerHTML = `<div class="parch-label">Tutorial complete</div>${keycaps('Free sailing. Kamal (2) and quadrant (3) unlocked. C shows the star chart.')}`;
+    this.goalEl.remove(); // the orders card takes this slot
+    this.host.finished();
   }
 }
 

@@ -3,7 +3,7 @@ export class OrdersCard {
   private readonly el = document.createElement('div');
 
   constructor() {
-    this.el.id = 'goal-card';
+    this.el.id = 'orders-card';
     this.el.className = 'parch';
     this.el.style.display = 'none';
     document.body.appendChild(this.el);

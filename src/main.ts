@@ -26,10 +26,10 @@ import { WorldSim } from './app/worldSim';
 import { RoundRunner } from './app/rounds';
 import { ParrotNags } from './app/nags';
 import { OrdersCard } from './ui/ordersCard';
+import { roundHost, tutorialHost, kamalKnots, type GameRef } from './app/hosts';
+import { tutorialIsland } from './world/tutorialIsland';
 import { setHazeColor } from './render/haze';
 import './ui/theme.css';
-import type { StepSetup } from './tutorial/steps';
-import type { InstrumentId } from './ui/instrumentOverlay';
 
 const M_PER_DEG = 600; // DESIGN §6. Flat equirectangular: x = lon·600, z = −lat·600.
 const SIM_STEP_S = 1 / 60;
@@ -107,61 +107,29 @@ if (mode === 'chart') nav.openChart();
 // Debug/test handle (?debug=1 only): lets Playwright scripts inspect state instead of guessing.
 if (scenario.debug) (window as unknown as { __game: unknown }).__game = { nav, celestial };
 
-const tutorial = scenario.step === null ? null : new TutorialRunner(scenario.step, {
-  applySetup: (s: StepSetup, jump: boolean) => {
-    if (s.latDeg !== undefined) {
-      boat = { ...boat, z: -s.latDeg * M_PER_DEG };
-      nav.resetFix({ latDeg: s.latDeg, lonDeg: boat.x / M_PER_DEG });
-    }
-    if (s.hour !== undefined && (jump || s.hour - hourOfDay(clock) > 1)) {
-      clock = { ...clock, gameSeconds: dayNumber(clock) * 86400 + s.hour * 3600 };
-    }
-    if (s.windFromDeg !== undefined) wind.fromDeg = s.windFromDeg;
-    if (s.trimDeg !== undefined) boat = { ...boat, trimDeg: s.trimDeg };
-    if (jump && s.headingDeg !== undefined) {
-      boat = { ...boat, headingDeg: s.headingDeg, trimDeg: s.trimDeg ?? optimalTrim(trueWindAngle(s.headingDeg, wind.fromDeg)) };
-    }
-    if (jump && s.at) { mode = s.at; player = s.at === 'deck' ? { ...DECK_SPAWN } : { ...STATION_STAND[s.at] }; }
-  },
-  setOverlay: (o) => { celestial.overlay = o; },
-  setInstruments: (ids) => {
-    nav.available = new Set(ids as InstrumentId[]);
-    if (!nav.available.has(nav.instrument)) nav.instrument = (ids[0] as InstrumentId) ?? 'hand';
-  },
-}, dialogue, choice);
-
-// Rounds (core loop): bare URL or ?round=N. Kamal knots = northern port latitudes + the orders'.
+// State handed to the tutorial/round hosts (app/hosts.ts) as accessors.
+const game: GameRef = {
+  get boat() { return boat; }, set boat(b) { boat = b; },
+  get clock() { return clock; }, set clock(c) { clock = c; },
+  get mode() { return mode; }, set mode(m) { mode = m; },
+  get player() { return player; }, set player(p) { player = p; },
+  wind, nav, worldSim, setOverlay: (o) => { celestial.overlay = o; },
+};
+const tIsland = tutorialIsland(worldSim.world);
 const ordersCard = new OrdersCard();
-const rounds = scenario.round === null || tutorial ? null : new RoundRunner(worldSim.world, scenario.seed, scenario.round, {
-  placeBoat: (latDeg, lonDeg, h0) => {
-    Object.assign(wind, worldSim.windAt(latDeg, lonDeg, clock.gameSeconds)); // trim for the wind actually there
-    const headingDeg = trueWindAngle(h0, wind.fromDeg) < 50 ? (h0 + 90) % 360 : h0; // never start in irons
-    boat = worldSim.clearSpawn({ ...boat, x: lonDeg * M_PER_DEG, z: -latDeg * M_PER_DEG, headingDeg, speedMs: 4, trimDeg: optimalTrim(trueWindAngle(headingDeg, wind.fromDeg)) });
-    nav.resetFix({ latDeg, lonDeg });
-    mode = 'helm'; player = { ...STATION_STAND.helm };
-  },
-  setHour: (h) => { // always forward: the next time it's h o'clock
-    const t = dayNumber(clock) * 86400 + h * 3600;
-    clock = { ...clock, gameSeconds: t > clock.gameSeconds ? t : t + 86400 };
-    return clock.gameSeconds;
-  },
-  setOrders: (text) => {
-    nav.chart.orders = text;
-    ordersCard.set(`Round ${rounds?.round.n ?? ''} · orders`, text);
-    const t = rounds?.round.target;
-    nav.setKamalKnots([
-      ...worldSim.world.islands.filter((i) => i.port && i.latDeg > 0.5 && i.id !== t?.id).map((i) => ({ deg: +i.latDeg.toFixed(1), label: `${i.latDeg.toFixed(1)}° ${i.name}` })),
-      ...(t && t.latDeg > 0.5 ? [{ deg: +t.latDeg.toFixed(1), label: `${t.latDeg.toFixed(1)}° ${t.name} (orders)` }] : []),
-    ]);
-  },
-  discover: (isl) => { if (!nav.chart.known.some((k) => k.name === isl.name)) nav.chart.known.push({ name: isl.name, latDeg: isl.latDeg, lonDeg: isl.lonDeg }); },
-}, dialogue, worldSim.toast);
-if (rounds) {
+// Rounds (core loop): bare URL, ?round=N, or after the tutorial's graduation.
+const rounds: RoundRunner | null = scenario.round === null && scenario.step === null ? null
+  : new RoundRunner(worldSim.world, scenario.seed, scenario.round ?? 1, roundHost(game, ordersCard, (): RoundRunner | null => rounds), dialogue, worldSim.toast);
+const startRounds = () => {
+  if (!rounds) return;
   worldSim.onArrive = (isl, nowS) => rounds.onArrive(isl, nowS, clock.gameSeconds);
   rounds.start(performance.now() / 1000);
-}
+};
+const tutorial = scenario.step === null ? null : new TutorialRunner(scenario.step, tutorialHost(game, tIsland, startRounds), dialogue, choice);
+if (tutorial) nav.setKamalKnots(kamalKnots(game, tIsland, ' (lesson)'));
+else startRounds();
 if (scenario.debug) Object.assign((window as unknown as { __game: object }).__game, {
-  rounds, worldSim, teleport: (latDeg: number, lonDeg: number) => { boat = { ...boat, x: lonDeg * M_PER_DEG, z: -latDeg * M_PER_DEG }; },
+  rounds, worldSim, tutorial, tIsland: () => tIsland, teleport: (latDeg: number, lonDeg: number) => { boat = { ...boat, x: lonDeg * M_PER_DEG, z: -latDeg * M_PER_DEG }; },
 });
 
 // --- helpers ----------------------------------------------------------------
@@ -219,7 +187,7 @@ function frame(nowMs: number): void {
 
   warp = stepWarp(warp, {
     atHelm: mode === 'helm', inputActive: input.anyDown(ACTIVE_KEYS) || nav.raised || !free, speedMs: boat.speedMs,
-    blocked: (tutorial?.active ?? false) || blockWarp, // no fast-forwarding while learning, or into land
+    blocked: (tutorial?.active && !tutorial.allowWarp) || blockWarp, // no fast-forwarding while learning, or into land
   }, dt);
   if (!windFixed && !tutorial?.active) Object.assign(wind, worldSim.windAt(-boat.z / M_PER_DEG, boat.x / M_PER_DEG, clock.gameSeconds));
   const simDt = dt * warp.warp;
@@ -285,6 +253,8 @@ function frame(nowMs: number): void {
   tutorial?.update({
     mode, compassDeg: nav.compassDeg, speedKn: toKnots(boat.speedMs), efficiency: tel.efficiency, luffing: tel.luffing,
     ...look, latDeg, lstDeg: sky.lstDeg, instrument: nav.instrument, raised: nav.raised,
+    islandLatDeg: tIsland.latDeg, logged: nav.dr.speedKn !== null, marks: nav.dr.marks.length,
+    atIsland: !!worldSim.prox?.arrived && worldSim.prox.island?.id === tIsland.id,
   }, nowS, dt);
   nags.update({ mode, twaDeg: tel.twaDeg, luffing: tel.luffing, ...look, latDeg, sunAltDeg: celestial.lastSunAltDeg }, dt, nowS);
   dialogue.update();

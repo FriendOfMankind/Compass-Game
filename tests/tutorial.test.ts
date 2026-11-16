@@ -8,6 +8,7 @@ import parrot from '../src/content/parrot.json';
 const base: TutorialCtx = {
   mode: 'helm', compassDeg: 0, speedKn: 0, efficiency: 0, luffing: true, lookAzDeg: 0, lookAltDeg: 0,
   latDeg: 12, lstDeg: 0, instrument: 'hand', raised: false,
+  islandLatDeg: 14, logged: false, marks: 0, atIsland: false,
 };
 const goal = (n: number, i = 0) => STEPS[stepIndex(n)].goals[i];
 function lookAt(name: string, lat: number, hour: number): TutorialCtx {
@@ -18,8 +19,47 @@ function lookAt(name: string, lat: number, hour: number): TutorialCtx {
 }
 
 describe('tutorial steps', () => {
-  it('has steps 1–6 and 9, each jumpable', () => {
-    expect(STEPS.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 9]);
+  it('has all 10 steps in order, each jumpable', () => {
+    expect(STEPS.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('step 7: kamal on Polaris, then the island latitude, then east', () => {
+    const c = lookAt('Polaris', 12.4, 21.6);
+    expect(goal(7, 0).check({ ...c, raised: true, instrument: 'kamal' })).toBe(true);
+    expect(goal(7, 0).check({ ...c, raised: true, instrument: 'hand' })).toBe(false);
+    expect(goal(7, 1).check({ ...base, latDeg: 13.95, islandLatDeg: 14 })).toBe(true);
+    expect(goal(7, 1).check({ ...base, latDeg: 13.5, islandLatDeg: 14 })).toBe(false);
+    expect(goal(7, 2).check({ ...base, compassDeg: 95 })).toBe(true);
+    expect(goal(7, 2).check({ ...base, compassDeg: 0 })).toBe(false);
+  });
+
+  it('step 7: Polaris is up at the step time and latitude band of tutorial islands', () => {
+    for (const lat of [3.4, 8, 15, 21]) expect(lookAt('Polaris', lat, 21.6).lookAltDeg).toBeGreaterThan(2);
+  });
+
+  it('step 7: wind from 160 lets you sail north (run) and east (reach)', async () => {
+    const { trueWindAngle } = await import('../src/sim/sailing');
+    const w = STEPS[stepIndex(7)].setup!.windFromDeg!;
+    expect(trueWindAngle(0, w)).toBeGreaterThan(45);
+    expect(trueWindAngle(90, w)).toBeGreaterThan(45);
+  });
+
+  it('step 8: log, chart mark, arrival', () => {
+    expect(goal(8, 0).check({ ...base, logged: true })).toBe(true);
+    expect(goal(8, 1).check({ ...base, marks: 1 })).toBe(true);
+    expect(goal(8, 2).check({ ...base, atIsland: true })).toBe(true);
+    expect(goal(8, 2).check(base)).toBe(false);
+  });
+
+  it('tutorial island: ≥ 5°N with a clear start, on 200 seeds', async () => {
+    const { generateWorld } = await import('../src/world/worldgen');
+    const { tutorialIsland, tutorialStart } = await import('../src/world/tutorialIsland');
+    const { proximity } = await import('../src/world/hazards');
+    for (let seed = 0; seed < 200; seed++) {
+      const w = generateWorld(seed), isl = tutorialIsland(w), st = tutorialStart(w, isl);
+      expect(isl.latDeg).toBeGreaterThanOrEqual(5);
+        expect(proximity(w, st.lonDeg * 600, -st.latDeg * 600).shoreDistM, `seed ${seed}`).toBeGreaterThan(800);
+    }
   });
 
   it('every parrot key referenced by a step exists', () => {
@@ -75,12 +115,12 @@ describe('tutorial steps', () => {
 describe('tutorial wind', () => {
   it('no step setup (jump or continue) starts you in irons', async () => {
     const { trueWindAngle } = await import('../src/sim/sailing');
-    const headings = new Set<number>([90]); // heading carried over when continuing
+    // Continuing keeps your heading; every step that ends on a course ends on 090 (steps 2–8).
+    let wind = 0;
     for (const s of STEPS) {
-      const w = s.setup?.windFromDeg ?? 0;
-      expect(w, `step ${s.n} wind`).toBe(0);
-      if (s.setup?.headingDeg !== undefined) headings.add(s.setup.headingDeg);
+      wind = s.setup?.windFromDeg ?? wind;
+      const headings = [90, ...(s.setup?.headingDeg !== undefined ? [s.setup.headingDeg] : [])];
+      for (const h of headings) expect(trueWindAngle(h, wind), `step ${s.n}, heading ${h}, wind ${wind}`).toBeGreaterThanOrEqual(45);
     }
-    for (const h of headings) expect(trueWindAngle(h, 0), `heading ${h}`).toBeGreaterThanOrEqual(45);
   });
 });

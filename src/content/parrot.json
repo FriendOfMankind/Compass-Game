@@ -107,8 +107,8 @@
     "Found nothing, precisely. Its height above the horizon is how far south we are."
   ],
   "tutorial.end": [
-    "That's enough for one night. North star, south pole, fists. The islands can wait.",
-    "Lesson over. You can find your latitude anywhere now. Longitude is another story."
+    "Lesson over. Here come your first real orders.",
+    "That's the lot. Real orders now. Latitude first, then run it down."
   ],
   "log.thrown": [
     "Log line's out. Counting the knots against the sandglass.",
@@ -167,5 +167,68 @@
     "Wrong island. Compare the shape to the orders.",
     "Lovely island. Not ours.",
     "That's not it. Check your latitude."
+  ],
+  "tutorial.step7.intro": [
+    "Here's a real job. There's an island north-east of us, and I know its latitude."
+  ],
+  "tutorial.step7.kamal": [
+    "This is a kamal. Board on a string. Each knot is a port's latitude. Ancient, clever, cheap."
+  ],
+  "tutorial.step7.kamalHint": [
+    "Press 2, hold right-click, look at Polaris. The board sits on the horizon for you."
+  ],
+  "tutorial.step7.kamalDone": [
+    "Board on the horizon, star on the top edge. That's the whole instrument."
+  ],
+  "tutorial.step7.north": [
+    "Head north. As we go, Polaris climbs. When it sits on the island's knot, we're on its latitude."
+  ],
+  "tutorial.step7.northHint": [
+    "Keep north. Raise the kamal now and then. Star above the board's top edge: keep going."
+  ],
+  "tutorial.step7.northDone": [
+    "Polaris is on the knot. We're on the island's latitude. Stop going north."
+  ],
+  "tutorial.step7.east": [
+    "Now turn east and run along the latitude. This is how ships found islands for centuries."
+  ],
+  "tutorial.step7.eastHint": [
+    "East is 090 on the compass. Steer with A and D. Gently."
+  ],
+  "tutorial.step7.done": [
+    "Good. The island is somewhere ahead on this line. How far is the hard part."
+  ],
+  "tutorial.step8.intro": [
+    "We don't know how far east it is. So we track speed and time. That's dead reckoning."
+  ],
+  "tutorial.step8.logHint": [
+    "Press L. The log line counts knots while the sand runs. Yes, that's where knots come from."
+  ],
+  "tutorial.step8.logDone": [
+    "Speed logged. Heading from the compass, speed from the log, time from the clock."
+  ],
+  "tutorial.step8.chart": [
+    "Now the chart. Mark where we think we are. Thinking is generous."
+  ],
+  "tutorial.step8.chartHint": [
+    "Let go of the wheel with E, walk to the table on the left, press E, click Mark position."
+  ],
+  "tutorial.step8.chartDone": [
+    "Marked. Every error from here on is officially on record."
+  ],
+  "tutorial.step8.find": [
+    "Back on course and keep the latitude. Islands hide in haze until you're close."
+  ],
+  "tutorial.step8.findHint": [
+    "I've pencilled it on the chart. Just this once. Stay on the latitude and keep east."
+  ],
+  "tutorial.step8.done": [
+    "Land, right where the star said. You'll take the credit. I'll allow it."
+  ],
+  "tutorial.step10.intro": [
+    "You can find north, measure latitude and run it down. That's more than most captains."
+  ],
+  "tutorial.step10.done": [
+    "No more hints. You're on your own. Try not to embarrass me."
   ]
 }

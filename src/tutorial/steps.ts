@@ -1,5 +1,6 @@
 // Tutorial step definitions (DESIGN §9). Pure data + check functions over a context snapshot.
-// Steps 7, 8 (island latitude sailing + DR) and 10 (graduation) need islands → M4.
+// Steps 7–8 use the world's tutorial island (world/tutorialIsland.ts); goal text may say
+// {island} and {islandLat}, which the runner fills in.
 import { starByName } from '../astro/stars';
 import { equatorialToHorizontal, horizontalToVector } from '../astro/transform';
 import type { SkyOverlay } from '../render/celestial';
@@ -16,6 +17,10 @@ export interface TutorialCtx {
   lstDeg: number;
   instrument: string;
   raised: boolean;
+  islandLatDeg: number;  // the tutorial island's latitude (steps 7–8)
+  logged: boolean;       // the log has been thrown at least once
+  marks: number;         // positions marked on the chart
+  atIsland: boolean;     // arrived at the tutorial island
 }
 
 export interface StepSetup {
@@ -26,6 +31,8 @@ export interface StepSetup {
   trimDeg?: number;
   at?: 'deck' | 'helm';
   instruments?: string[];
+  /** Teleport to the tutorial start south-west of the tutorial island. */
+  atTutorialStart?: boolean;
 }
 
 export interface Goal {
@@ -38,6 +45,10 @@ export interface Goal {
   overlay?: Partial<SkyOverlay>;     // sky highlights while active
   hintOverlay?: Partial<SkyOverlay>; // extra highlights once the hint fires
   done?: string;
+  /** Let time warp work during this goal (open-water passages). Default: no warp in the tutorial. */
+  allowWarp?: boolean;
+  /** When the hint fires, also ink the tutorial island onto the chart (the tutorial's one waypoint). */
+  revealOnHint?: boolean;
   /** Ask a multiple-choice question after the check passes. Correct index is computed from ctx. */
   question?: { key: string; text: string; options: (c: TutorialCtx) => { labels: string[]; correct: number }; wrong: string };
 }
@@ -118,6 +129,42 @@ export const STEPS: readonly Step[] = [
     }],
   },
   {
+    n: 7, title: 'Latitude sailing', setup: { at: 'helm', hour: 21.6, atTutorialStart: true, headingDeg: 0, windFromDeg: 160, instruments: ['hand', 'kamal'] },
+    goals: [
+      {
+        text: 'Switch to the kamal (2), raise it (hold right-click) and put its top edge on Polaris', intro: ['tutorial.step7.intro', 'tutorial.step7.kamal'], hint: 'tutorial.step7.kamalHint',
+        hintAfterS: 25, done: 'tutorial.step7.kamalDone', holdS: 1, overlay: { polaris: true },
+        check: (c) => c.raised && c.instrument === 'kamal' && lookingAtStar(c, 'Polaris', 8),
+      },
+      {
+        text: 'Sail north until Polaris sits on the {island} knot ({islandLat}). Check with the kamal as you go', intro: 'tutorial.step7.north', hint: 'tutorial.step7.northHint',
+        hintAfterS: 90, done: 'tutorial.step7.northDone', holdS: 0, overlay: { polaris: true }, allowWarp: true,
+        check: (c) => Math.abs(c.latDeg - c.islandLatDeg) < 0.2,
+      },
+      {
+        text: 'Now turn east (090) and run along the latitude', intro: 'tutorial.step7.east', hint: 'tutorial.step7.eastHint', hintAfterS: 25,
+        done: 'tutorial.step7.done', holdS: 3, check: (c) => c.mode === 'helm' && Math.abs(((c.compassDeg - 90 + 540) % 360) - 180) < 12,
+      },
+    ],
+  },
+  {
+    n: 8, title: 'Dead reckoning', setup: { at: 'helm', hour: 21.9, windFromDeg: 160, instruments: ['hand', 'kamal'] },
+    goals: [
+      {
+        text: 'Throw the log line (L) and wait for the sandglass', intro: 'tutorial.step8.intro', hint: 'tutorial.step8.logHint', hintAfterS: 20,
+        done: 'tutorial.step8.logDone', check: (c) => c.logged,
+      },
+      {
+        text: 'Walk to the chart table (press E to let go of the wheel), open it and mark your position', intro: 'tutorial.step8.chart', hint: 'tutorial.step8.chartHint',
+        hintAfterS: 40, done: 'tutorial.step8.chartDone', check: (c) => c.marks > 0,
+      },
+      {
+        text: 'Keep heading east along {islandLat} until {island} comes out of the haze, then reach it', intro: 'tutorial.step8.find', hint: 'tutorial.step8.findHint',
+        hintAfterS: 75, revealOnHint: true, allowWarp: true, done: 'tutorial.step8.done', check: (c) => c.atIsland,
+      },
+    ],
+  },
+  {
     n: 9, title: 'Crossing the line', setup: { at: 'helm', hour: 22, latDeg: -12, headingDeg: 180, windFromDeg: 0, instruments: ['hand'] },
     goals: [
       {
@@ -131,6 +178,13 @@ export const STEPS: readonly Step[] = [
         check: (c) => -c.latDeg > 0 && lookDistanceDeg(c, -c.latDeg, 180) < 4,
       },
     ],
+  },
+  {
+    n: 10, title: 'Graduation', setup: { instruments: ['hand', 'kamal', 'quadrant'] },
+    goals: [{
+      text: 'No more hints. Orders come next: an exact latitude and a vague direction. Off you go', intro: 'tutorial.step10.intro',
+      done: 'tutorial.step10.done', holdS: 6, check: () => true,
+    }],
   },
 ];
 

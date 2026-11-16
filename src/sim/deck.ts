@@ -18,7 +18,7 @@ export const STATIONS: readonly Station[] = [
 
 /** Where the player stands when using a station. */
 export const STATION_STAND: Record<StationId, { x: number; z: number }> = {
-  helm: { x: 0, z: 5.2 },
+  helm: { x: 0.4, z: 5.2 }, // just to starboard of the wheel, so the mast doesn't hide a star dead ahead (Polaris when heading north)
   mast: { x: 0.7, z: -0.4 },
   chart: { x: -0.35, z: 2.2 },
 };
