@@ -123,6 +123,14 @@ export class Ship {
     this.pennant.material = flat('#d8402f', THREE.DoubleSide);
     this.pennant.position.set(0, DECK_Y + MAST_HEIGHT + 0.1, MAST_Z);
 
+    // Chart table to port, abaft the mast.
+    const table = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.85, 1.0), flat('#6e4524'));
+    table.position.set(-1.05, DECK_Y + 0.425, 2.2);
+    const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.85), flat('#e9dcb8'));
+    paper.rotation.x = -Math.PI / 2;
+    paper.position.set(-1.05, DECK_Y + 0.855, 2.2);
+    this.root.add(table, paper);
+
     this.root.add(hull, deck, mast, bowsprit, this.boomPivot, pedestal, this.wheel, this.pennant);
   }
 

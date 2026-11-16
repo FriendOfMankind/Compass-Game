@@ -24,7 +24,7 @@ export interface Scenario {
   lines: boolean;
 }
 
-export type Station = 'deck' | 'helm' | 'mast';
+export type Station = 'deck' | 'helm' | 'mast' | 'chart';
 
 // World bounds (DESIGN §6). Longitude is relative to the patch, centred on 0.
 export const LAT_MIN_DEG = -25;
@@ -110,7 +110,7 @@ export function parseScenario(search: string, fallbackSeed: number): Scenario {
 }
 
 function parseStation(raw: string | null): Station {
-  return raw === 'helm' || raw === 'mast' ? raw : 'deck';
+  return raw === 'helm' || raw === 'mast' || raw === 'chart' ? raw : 'deck';
 }
 
 function flag(raw: string | null): boolean {

@@ -25,4 +25,5 @@ First-person pirate sailing game teaching real celestial navigation. **Read `DES
 - World axes: +X east, +Y up, −Z north. Heading/azimuth 0° = north, clockwise.
 - Game clock = home time (UT at the patch's 0° meridian). JD = start date + clock.
 - PowerShell (Windows) for any commands given to Colin: no `&&`, one command per block.
+- Interaction tests: `?debug=1` exposes `window.__game` (nav, celestial) for Playwright probes. Tutorial: `?step=N` (1–6, 9).
 - Parrot dialogue lives in `src/content/parrot.json`, never hardcoded.

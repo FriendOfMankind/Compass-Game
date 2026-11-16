@@ -56,17 +56,22 @@ function labelSprite(text: string, sub: string, color: string): THREE.Sprite {
 const at = (v: V3) => new THREE.Vector3(v[0] * R, v[1] * R, v[2] * R);
 const vec = (name: string): V3 => { const s = starByName(name); return equatorialVector(s.raDeg, s.decDeg); };
 
-export function buildSkyMarkers(): THREE.Group {
-  const g = new THREE.Group();
+export interface SkyMarkers {
+  group: THREE.Group;
+  polaris: THREE.Object3D;      // ring + label
+  polarisGuide: THREE.Object3D; // Merak → Dubhe → Polaris
+  south: THREE.Object3D;
+  southGuide: THREE.Object3D;   // Gacrux → Acrux → pole
+}
 
-  const north = labelSprite('Polaris', 'north · height = your latitude', '#ffd37a');
-  north.position.copy(at(vec('Polaris')));
-  g.add(north, dashedLine(guideArc(vec('Merak'), vec('Dubhe'), 5.2), 0xffd37a));
-
+export function buildSkyMarkers(): SkyMarkers {
+  const group = new THREE.Group();
+  const polaris = labelSprite('Polaris', 'north · height = your latitude', '#ffd37a');
+  polaris.position.copy(at(vec('Polaris')));
+  const polarisGuide = dashedLine(guideArc(vec('Merak'), vec('Dubhe'), 5.2), 0xffd37a);
   const south = labelSprite('South Pole', 'no star here · height = latitude S', '#9fe0ff');
   south.position.copy(at([0, 0, -1]));
-  g.add(south, dashedLine(guideArc(vec('Gacrux'), vec('Acrux'), 4.5), 0x9fe0ff));
-
-  g.visible = false;
-  return g;
+  const southGuide = dashedLine(guideArc(vec('Gacrux'), vec('Acrux'), 4.5), 0x9fe0ff);
+  for (const o of [polaris, polarisGuide, south, southGuide]) { o.visible = false; group.add(o); }
+  return { group, polaris, polarisGuide, south, southGuide };
 }

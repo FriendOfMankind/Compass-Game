@@ -1,0 +1,136 @@
+{
+  "tutorial.step1.intro": [
+    "Morning. I'm Admiral Biscuit, your navigator. Find the wheel. Walk with WASD, press E at the helm.",
+    "Admiral Biscuit, decorated navigator. Don't ask about the incident. Wheel's at the back. E to grab it."
+  ],
+  "tutorial.step1.hint": [
+    "The wheel. Round thing. Back of the boat. You walked past it.",
+    "Aft. That means the back. The wheel is aft."
+  ],
+  "tutorial.step1.done": [
+    "You found the wheel. Historic.",
+    "Good. Hands on the wheel. Try not to look so pleased."
+  ],
+  "tutorial.step2.intro": [
+    "That strip up top is the compass. Steer to ninety degrees. East. Hold it ten seconds.",
+    "A and D steer. Get the compass on 090, that's east, and keep it there."
+  ],
+  "tutorial.step2.hint": [
+    "Small corrections. The boat takes a moment to answer. Like you.",
+    "Compass card, top of the view. Red mark on 090. Gently."
+  ],
+  "tutorial.step2.done": [
+    "Steady on east. Compasses lie a degree or two, by the way. Iron aboard.",
+    "Ten seconds on a heading. Columbus is shaking."
+  ],
+  "tutorial.step3.intro": [
+    "The sail's flapping. That's called luffing. W sheets it in, S eases it out.",
+    "Hear that flapping? Wasted wind. Sheet in with W until it fills."
+  ],
+  "tutorial.step3.hint": [
+    "Flapping means too loose. Too tight and you stall. Find the middle.",
+    "Sheet in until the flapping stops, then a touch more. Not a lot more."
+  ],
+  "tutorial.step3.done": [
+    "Now we're sailing. Fastest with the wind on the side. Never straight into it.",
+    "Lovely. Wind on the beam, sail drawing. Even I'm mildly impressed."
+  ],
+  "tutorial.step4.intro": [
+    "Night falls. Faster than usual. Look north and find the Big Dipper.",
+    "Stars are out. Seven bright ones shaped like a saucepan, to the north. Find them."
+  ],
+  "tutorial.step4.hint": [
+    "North. Behind you, probably. Look up a bit. Saucepan with a bent handle.",
+    "Seven stars. Four make a bowl, three make a handle. North sky."
+  ],
+  "tutorial.step4.done": [
+    "That's the Big Dipper. Remember it. You'll need it more than you need me.",
+    "The Dipper. Ursa Major if you're posh. I am posh."
+  ],
+  "tutorial.step5.intro": [
+    "The two stars at the end of the bowl are the pointers. Follow them about five times their gap.",
+    "Bowl's outer edge, two stars. Draw a line through them, away from the bowl. Keep going."
+  ],
+  "tutorial.step5.hint": [
+    "No, the other end of the bowl. Yes. Keep going. Further. There.",
+    "I've drawn it for you. Don't tell anyone."
+  ],
+  "tutorial.step5.done": [
+    "Polaris. It barely moves all night. Its height above the horizon is your latitude.",
+    "That's Polaris, the North Star. Not the brightest. Just the most useful. Like me."
+  ],
+  "tutorial.step6.intro": [
+    "Right-click to hold out your fist. Bottom on the horizon. Count fists up to Polaris.",
+    "Arm out, fist on the horizon. One fist is ten degrees, one finger two. Measure Polaris."
+  ],
+  "tutorial.step6.hint": [
+    "Hold right-click. Look at Polaris. Count the fists from the sea up to it.",
+    "Fists from the horizon. Not from your feet. The horizon."
+  ],
+  "tutorial.step6.ask": [
+    "Well? How high is Polaris, and where does that put us?"
+  ],
+  "tutorial.step6.wrong": [
+    "No. Count again. Fist is ten, finger is two. I'll wait. I'm good at waiting.",
+    "Wrong. Polaris height equals latitude. Fists, then fingers. Again."
+  ],
+  "tutorial.step6.done": [
+    "Correct. Polaris height is your latitude. Sailors used this for a thousand years.",
+    "Right. Twelve north, give or take. I knew that already, but well done."
+  ],
+  "tutorial.step9.intro": [
+    "We're crossing the equator. Tradition says I insult you now. Consider it done.",
+    "Crossing the line. Sailors used to get dunked for this. You get me instead."
+  ],
+  "tutorial.step9.polaris": [
+    "Polaris is below the horizon now. It's not hiding from you. Well. It is now.",
+    "South of the equator the North Star sets for good. New trick needed."
+  ],
+  "tutorial.step9.cross": [
+    "Look south. Four bright stars in a kite. The Southern Cross. Two bright Pointers beside it.",
+    "South sky: a small cross, with two bright stars pointing at it. Find it."
+  ],
+  "tutorial.step9.crossHint": [
+    "South. Low-ish. Smaller than you expect. Everyone says that.",
+    "If it has no pointers, it's the False Cross. The real one's tighter."
+  ],
+  "tutorial.step9.crossDone": [
+    "That's Crux. The long bar points to the south pole. There's no star there. Just the spot.",
+    "Good. Now extend the long axis, top to foot, about four and a half lengths."
+  ],
+  "tutorial.step9.poleHint": [
+    "Long bar, top star through the bright foot star. Keep going down. Four and a half times.",
+    "I've drawn the line. The pole is empty sky. Navigators found it anyway."
+  ],
+  "tutorial.step9.done": [
+    "That empty patch is the south pole. Its height is your latitude south. Same trick, no star.",
+    "Found nothing, precisely. Its height above the horizon is how far south we are."
+  ],
+  "tutorial.end": [
+    "That's enough for one night. North star, south pole, fists. The islands can wait.",
+    "Lesson over. You can find your latitude anywhere now. Longitude is another story."
+  ],
+  "log.thrown": [
+    "Log line's out. Counting the knots against the sandglass.",
+    "Paying out the log. Sandglass running."
+  ],
+  "log.result": [
+    "There's your speed. Plus or minus a sailor's honesty.",
+    "Speed logged. The chart will reckon our position from it. Roughly."
+  ],
+  "irons": [
+    "We're pointing into the wind. That's called being in irons. Turn.",
+    "Nobody sails straight into the wind. Not even me."
+  ],
+  "luff.long": [
+    "That flapping is money leaving the boat. Sheet in.",
+    "The sail is applauding your trim. Sarcastically."
+  ],
+  "south.lookingForPolaris": [
+    "It's below the horizon. It's not hiding from you. Well. It is now."
+  ],
+  "chart.first": [
+    "The chart. It shows where we think we are. Thinking is doing a lot of work there.",
+    "Our reckoned position. Compass, log and hope."
+  ]
+}

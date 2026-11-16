@@ -1,10 +1,7 @@
 # progress.md
 
 ## Current milestone
-M2: The real sky: BUILT, awaiting Colin's playtest. Next: **M3 = instruments & navigation + tutorial (sky steps)**. Scope (Colin's call, after M2):
-- DESIGN M3 as written: compass binnacle, hand measurement, kamal, quadrant, log line, chart table with DR track + latitude lines, tests for DR + instrument noise.
-- PLUS from M5, pulled forward: dialogue system + `src/content/parrot.json`, and tutorial steps 1–6 and 9 (walk, steer, sails, find Dipper, find Polaris, fist-measure latitude, Crossing the Line / Southern Cross), each with a check function and `step=` URL.
-- Steps 7–8 (latitude-sail to an island, dead reckoning to find it) and 10 (graduation) need islands → move to M4. M5 becomes polish + guinea-pig test.
+M3: Instruments & navigation + tutorial (sky steps): BUILT, awaiting Colin's playtest. Next: M4 (world: islands, ports, trade winds + tutorial steps 7, 8, 10).
 
 ## Done
 - **M0: Skeleton** — Vite + TS (strict) + Three.js; first-person mouse-look (click for pointer lock); static ocean plane + time-of-day sky gradient; game clock (20 min/day); debug HUD (`?debug=1`); scenario URL parser (`seed/lat/lon/time/heading/step/debug`); vitest (10 tests); `npm run shot` (Playwright, spins up its own Vite server).
@@ -31,6 +28,18 @@ M2: The real sky: BUILT, awaiting Colin's playtest. Next: **M3 = instruments & n
   - Debug HUD: `look` line (compass direction + altitude of screen centre) and a centre crosshair. Params: `date=YYYY-MM-DD`, `pitch=`, `lines=1`. Debug HUD shows LST and sun altitude.
   - Acceptance screenshots: `?lat=20&time=23&heading=180&look=180&pitch=25` (Polaris ~20° up under the Dipper), `?lat=-15&time=23&heading=0&look=180&pitch=30` (Crux + Pointers, Scorpius rising SE).
 
+- **M3: Instruments, navigation, tutorial (built, awaiting playtest)**
+  - `src/nav/instruments.ts` (pure, tested): compass with fixed per-seed deviation ±2° + card swing while turning; log line ±10%; quadrant = sight altitude + plumb swing from hull motion, reads in 0.5° steps; kamal verdict; hand count.
+  - `src/nav/dr.ts` (pure, tested): DR integrates the COMPASS reading and the LAST LOG reading (not the truth), so error accumulates. Marks, fixes, latitude lines.
+  - Instruments (`src/app/navigation.ts`, `src/ui/instrumentOverlay.ts`): hold right-click to raise, 1/2/3 = hand/kamal/quadrant. Overlays are placed by projecting real sky directions, so a fist really is 10° wherever you look and the kamal board really sits on the horizon. Kamal knots 5/10/15/20/25° (scroll to change) until ports exist. No auto-solve: hand/kamal are judged by eye; only the quadrant shows a number.
+  - Compass tape at the helm (`src/ui/compassTape.ts`) shows the deviated reading. DESIGN said 3D binnacle; tape is clearer. Revisit if it feels too HUD-ish.
+  - Log line: press L anywhere, 4 s sandglass, speed feeds DR. Displayed knots are cosmetic (×0.6 of m/s, ~8 kn cruise); DR runs on internal units.
+  - Chart table: new deck station (port side, abaft the mast; `at=chart`). Paper chart centred on DR: DR track, Mark DR position, draw latitude lines by typing (14N / 6S), scroll zoom, E/Esc close. Never shows true position.
+  - Parrot: `src/ui/dialogue.ts` (queue, per-key cooldown, no repeat of last variant) + `src/content/parrot.json` (34 keys, all ≤20 words, each teaching line carries a fact). Nags: in irons, long luffing, looking for Polaris south of the equator.
+  - Tutorial (`src/tutorial/steps.ts` + `runner.ts`): steps 1–6 and 9 with check functions, hold timers, timed hints (hints also reveal guide lines), multiple-choice latitude quiz in step 6. `?step=N` jumps. Warp is disabled while the tutorial runs. Same north wind in every step (test: no step starts you in irons).
+  - Always-on centre reticle (look checks and sights measure from it). Debug: `window.__game` handle with `?debug=1` for Playwright probes.
+  - Verified in a real (headless) browser: step 5 → 6 → raise hand → quiz → correct answer → step 9 teleport south.
+
 ## Decisions
 - Real star data (HYG v4.x, mag ≤ 5.0), J2000, no precession/refraction.
 - HYG license confirmed CC BY-SA 4.0 (astronexus.com/projects/hyg). Attribute in credits; share-alike likely covers the derived `stars.json`. GitHub mirror is frozen; canonical source is codeberg.org/astronexus/hyg (blocked from the cloud container — download from astronexus.com or have Colin drop the CSV in).
@@ -42,13 +51,16 @@ M2: The real sky: BUILT, awaiting Colin's playtest. Next: **M3 = instruments & n
 - **Date is constrained** to mid-April (default 2026-04-15, tested ±15 days): at every latitude −25…+25 a taught pole-finder (Dipper pointers north of the equator, Crux at ≤10°N) is >8° up during darkness. Rounds should pick dates inside Apr 1–30.
 - **Clock = home time**: the game clock is UT at the patch's 0° meridian (lon 0 ≡ Greenwich). Local solar time and LST shift with longitude, which is exactly what the chronometer (M6) needs.
 - Night = sun below −12° (nautical twilight); stars fade in between −2° and −10°. ~8–9 real minutes of star time per 20-minute day in April tropics. Not selling the game, so CC BY-SA is a non-issue beyond attribution.
-- **Scale tension (decide in M3):** time compression 72× ≪ distance compression ~185×. Fun visual speed (~12 m/s ≈ 1°/50 s) = 1°/game-hour = 60 "knots" in honest DR units. Options: accept silly knot numbers, slow the boat and lean on warp, or define a game knot. M1 shows m/s only.
+- **Scale tension: DECIDED in M3**: knots are cosmetic (×0.6 m/s); the chart does DR maths internally, so players never multiply silly numbers. Was: time compression 72× ≪ distance compression ~185×. Fun visual speed (~12 m/s ≈ 1°/50 s) = 1°/game-hour = 60 "knots" in honest DR units. Options: accept silly knot numbers, slow the boat and lean on warp, or define a game knot. M1 shows m/s only.
 
 ## Open questions (Colin)
 - How is the round target described? Exact lat (latitude sailing) + vague bearing, per DESIGN §7?
 - Daytime spawns: wait for night (anchor fast-forward) until the noon-sun sight exists?
 
 ## Known bugs / rough edges
+- Looking abeam on a heeled boat shifts your view ~5–7° (measured: camera pitch 12° → 17.6° actual). Correct physics, but it makes "look at the star" fiddly; the reticle + 4° tolerance cover it. Watch in playtest.
+- Tutorial step 9 teleports you from 12°N to 12°S between steps (story jump, "crossing the line"). Real crossing comes with M4's world.
+- Headless screenshots run ~17–20 fps, so parrot lines may already have expired in automated shots. Not a game bug.
 - Headless screenshot FPS is 17–27 (SwiftShader software GL). Not representative; check real FPS in the debug HUD.
 - Wheel fills the bottom of the helm view; boom sits just above head height at the mast. Tune after playtest.
 - No collision with mast/wheel when walking (you can walk through them).
@@ -58,7 +70,17 @@ M2: The real sky: BUILT, awaiting Colin's playtest. Next: **M3 = instruments & n
 - No Milky Way (DESIGN: only if cheap). Skipped for now.
 
 ## Playtest notes (Colin)
-### M2: please answer these
+### M3: please answer these
+Try the tutorial from the top: `/?step=1`. Then free-sail at night: `/?at=helm&lat=15&time=21&debug=1`, measure Polaris with all three instruments (1/2/3, hold right-click), throw the log (L), open the chart table (walk to the table on the left, E).
+1. Did any tutorial step confuse you or get stuck? Which?
+2. Did the parrot make you laugh at least once? Which line fell flat?
+3. Hand vs kamal vs quadrant: does the progression feel like better tools for the same skill?
+4. Is the chart table useful or just there?
+
+### M2
+- Colin: can find the Dipper and Polaris without the lines. Asked for Polaris/south-pole highlights (done) and tutorial folded into M3 (done).
+
+### M2: original questions
 Try: `/?debug=1&at=helm&lat=20&time=21` → press C, look north. Then `&lat=-15` and look south. Sail north for a while at night under warp and watch Polaris climb.
 1. Can you find the Big Dipper WITHOUT the lines (C off)? Polaris?
 2. Are stars too bright/dim/big? (Varies a lot by monitor; headless screenshots aren't representative.)

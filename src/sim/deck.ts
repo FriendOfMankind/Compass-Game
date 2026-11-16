@@ -7,18 +7,20 @@ const WALK_SPEED = 2.6;
 const RAIL_MARGIN = 0.35;
 const INTERACT_RADIUS = 1.3;
 
-export type StationId = 'helm' | 'mast';
+export type StationId = 'helm' | 'mast' | 'chart';
 export interface Station { id: StationId; x: number; z: number; label: string; }
 
 export const STATIONS: readonly Station[] = [
   { id: 'helm', x: 0, z: 4.3, label: 'take the helm' },
   { id: 'mast', x: 0, z: -1.2, label: 'work the sail' },
+  { id: 'chart', x: -1.0, z: 2.2, label: 'read the chart' },
 ];
 
 /** Where the player stands when using a station. */
 export const STATION_STAND: Record<StationId, { x: number; z: number }> = {
   helm: { x: 0, z: 5.2 },
   mast: { x: 0.7, z: -0.4 },
+  chart: { x: -0.35, z: 2.2 },
 };
 
 /**

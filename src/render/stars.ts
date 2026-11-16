@@ -41,7 +41,8 @@ const fragmentShader = /* glsl */ `
 
 export class StarField {
   readonly group = new THREE.Group();
-  readonly lines: THREE.LineSegments;
+  /** One line set per constellation id, so the tutorial can highlight just one. */
+  readonly lines = new Map<string, THREE.LineSegments>();
   readonly markers = buildSkyMarkers();
   private readonly material: THREE.ShaderMaterial;
   private readonly lineMaterial: THREE.LineBasicMaterial;
@@ -73,22 +74,23 @@ export class StarField {
     const points = new THREE.Points(geo, this.material);
     points.frustumCulled = false;
 
-    const linePos: number[] = [];
-    for (const c of CONSTELLATIONS) for (const [a, b] of c.lines) {
-      for (const hip of [a, b]) {
-        const s = starByHip(hip)!;
-        const v = equatorialVector(s.raDeg, s.decDeg);
+    this.lineMaterial = new THREE.LineBasicMaterial({ color: 0x7fb4ff, transparent: true, opacity: 0.35, depthWrite: false });
+    this.group.add(points, this.markers.group);
+    for (const c of CONSTELLATIONS) {
+      const linePos: number[] = [];
+      for (const [a, b] of c.lines) for (const hip of [a, b]) {
+        const st = starByHip(hip)!;
+        const v = equatorialVector(st.raDeg, st.decDeg);
         linePos.push(v[0] * RADIUS * 0.999, v[1] * RADIUS * 0.999, v[2] * RADIUS * 0.999);
       }
+      const lg = new THREE.BufferGeometry();
+      lg.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+      const seg = new THREE.LineSegments(lg, this.lineMaterial);
+      seg.frustumCulled = false;
+      seg.visible = false;
+      this.lines.set(c.id, seg);
+      this.group.add(seg);
     }
-    const lg = new THREE.BufferGeometry();
-    lg.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
-    this.lineMaterial = new THREE.LineBasicMaterial({ color: 0x7fb4ff, transparent: true, opacity: 0.35, depthWrite: false });
-    this.lines = new THREE.LineSegments(lg, this.lineMaterial);
-    this.lines.frustumCulled = false;
-    this.lines.visible = false;
-
-    this.group.add(points, this.lines, this.markers);
     this.group.matrixAutoUpdate = false;
     this.group.renderOrder = -1;
     points.renderOrder = -1;
@@ -105,7 +107,7 @@ export class StarField {
     this.group.matrix.copy(this.m4);
     this.group.matrixWorldNeedsUpdate = true;
     this.material.uniforms.uVisibility.value = visibility;
-    this.lineMaterial.opacity = 0.35 * visibility;
+    this.lineMaterial.opacity = 0.45 * visibility;
     this.group.visible = visibility > 0.001;
   }
 }

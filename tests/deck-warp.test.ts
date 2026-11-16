@@ -23,7 +23,7 @@ describe('deck', () => {
   it('station stand spots are near their stations', () => {
     expect(nearestStation(STATION_STAND.helm)?.id).toBe('helm');
     expect(nearestStation(STATION_STAND.mast)?.id).toBe('mast');
-    expect(nearestStation({ x: 0, z: 1.5 })).toBeNull();
+    expect(nearestStation({ x: 0.6, z: 1.0 })).toBeNull();
   });
 });
 
@@ -54,5 +54,14 @@ describe('hull outline', () => {
     expect(hullHalfWidth(1.2)).toBeCloseTo(DECK_HALF_BEAM, 5); // max beam just aft of midships
     expect(hullHalfWidth(-4)).toBeLessThan(hullHalfWidth(0));
     expect(hullHalfWidth(DECK_HALF_LENGTH + 1)).toBe(0);
+  });
+});
+
+describe('chart station', () => {
+  it('chart table is reachable and on deck', async () => {
+    const { nearestStation, STATION_STAND, deckHalfWidth, STATIONS } = await import('../src/sim/deck');
+    expect(nearestStation(STATION_STAND.chart)?.id).toBe('chart');
+    const chart = STATIONS.find((s) => s.id === 'chart')!;
+    expect(Math.abs(chart.x)).toBeLessThan(deckHalfWidth(chart.z) + 0.35);
   });
 });
