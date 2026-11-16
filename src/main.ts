@@ -13,6 +13,7 @@ import { julianDate } from './astro/time';
 import { horizontalToVector } from './astro/transform';
 import { Water } from './render/water';
 import { Ship, DECK_Y } from './render/ship';
+import { Lighting } from './render/lighting';
 import { Input } from './ui/input';
 import { Prompt } from './ui/prompt';
 import { Dialogue } from './ui/dialogue';
@@ -39,15 +40,13 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x000000, 300, 2800);
-const hemi = new THREE.HemisphereLight(0xffffff, 0x2a3d4f, 1);
-const sun = new THREE.DirectionalLight(0xfff1d6, 1);
-scene.add(hemi, sun);
 
 const celestial = new Celestial(scene, renderer.getPixelRatio());
 celestial.overlay = scenario.lines ? FULL_OVERLAY : NO_OVERLAY;
 const water = new Water();
 const ship = new Ship();
 scene.add(water.mesh, ship.root);
+const lighting = new Lighting(scene, ship.root, renderer);
 // Game clock reads HOME TIME (UT at the patch's 0° meridian). JD = start date + clock.
 const jdStart = julianDate(scenario.date.year, scenario.date.month, scenario.date.day);
 
@@ -212,6 +211,7 @@ function frame(nowMs: number): void {
 
   const tel = telemetry(boat, wind);
   const side = windSide(boat.headingDeg, wind.fromDeg);
+  ship.setCompass(nav.compassDeg);
   ship.update(waveTime, boat.trimDeg, side, tel.luffing, tel.efficiency, boat.rudder, wind.fromDeg + 180 - boat.headingDeg);
   fp.place(player.x, DECK_Y, player.z, ship.root.rotation.z);
   ship.root.updateMatrixWorld();
@@ -223,9 +223,7 @@ function frame(nowMs: number): void {
   const light = sky.daylight;
   (scene.fog as THREE.Fog).color.copy(sky.horizon);
   water.update(waveTime, camWorld, sky.horizon, light, sky.sunDir, ship.root.matrixWorld);
-  hemi.intensity = 0.3 + 0.8 * light;
-  sun.intensity = 1.6 * light;
-  sun.position.copy(sky.sunDir).multiplyScalar(100);
+  lighting.update(light, sky.sunAltDeg, sky.sunDir, ship.root.position);
 
   if (chase) {
     const a = headingRad + THREE.MathUtils.degToRad(135 + scenario.lookDeg);
