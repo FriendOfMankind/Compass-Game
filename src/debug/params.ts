@@ -1,0 +1,80 @@
+// Scenario URL parsing: ?seed=&lat=&lon=&time=&heading=&step=&debug=1
+// Pure: no DOM access. Pass in location.search.
+
+export interface Scenario {
+  seed: number;
+  latDeg: number;
+  lonDeg: number;
+  /** Hour of the game day, 0–24. */
+  hour: number;
+  headingDeg: number;
+  step: number | null;
+  debug: boolean;
+}
+
+// World bounds (DESIGN §6). Longitude is relative to the patch, centred on 0.
+export const LAT_MIN_DEG = -25;
+export const LAT_MAX_DEG = 25;
+export const LON_MIN_DEG = -20;
+export const LON_MAX_DEG = 20;
+
+const NAMED_HOURS: Record<string, number> = {
+  dawn: 6,
+  day: 12,
+  noon: 12,
+  dusk: 18.5,
+  night: 23,
+  midnight: 0,
+};
+
+export const DEFAULT_SCENARIO: Omit<Scenario, 'seed'> = {
+  latDeg: 10,
+  lonDeg: 0,
+  hour: 12,
+  headingDeg: 0,
+  step: null,
+  debug: false,
+};
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+function num(raw: string | null): number | null {
+  if (raw === null || raw.trim() === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function normalizeDeg(deg: number): number {
+  return ((deg % 360) + 360) % 360;
+}
+
+export function parseHour(raw: string | null): number | null {
+  if (raw === null) return null;
+  const key = raw.trim().toLowerCase();
+  if (key in NAMED_HOURS) return NAMED_HOURS[key];
+  const hm = /^(\d{1,2}):(\d{2})$/.exec(key);
+  if (hm) return clamp(Number(hm[1]) + Number(hm[2]) / 60, 0, 24) % 24;
+  const n = num(key);
+  return n === null ? null : ((n % 24) + 24) % 24;
+}
+
+/**
+ * @param search  e.g. location.search ("?lat=12&time=night")
+ * @param fallbackSeed  used when no seed is given (caller supplies entropy;
+ *                      everything downstream of the seed is deterministic)
+ */
+export function parseScenario(search: string, fallbackSeed: number): Scenario {
+  const p = new URLSearchParams(search);
+  const seed = num(p.get('seed'));
+  const step = num(p.get('step'));
+  const debugRaw = p.get('debug');
+  return {
+    seed: seed === null ? fallbackSeed : Math.trunc(seed),
+    latDeg: clamp(num(p.get('lat')) ?? DEFAULT_SCENARIO.latDeg, LAT_MIN_DEG, LAT_MAX_DEG),
+    lonDeg: clamp(num(p.get('lon')) ?? DEFAULT_SCENARIO.lonDeg, LON_MIN_DEG, LON_MAX_DEG),
+    hour: parseHour(p.get('time')) ?? DEFAULT_SCENARIO.hour,
+    headingDeg: normalizeDeg(num(p.get('heading')) ?? DEFAULT_SCENARIO.headingDeg),
+    step: step === null ? null : Math.max(0, Math.trunc(step)),
+    debug: debugRaw !== null && debugRaw !== '0' && debugRaw !== 'false',
+  };
+}
