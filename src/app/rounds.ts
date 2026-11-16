@@ -1,11 +1,11 @@
 // Runs rounds: place the boat, set the clock, give the orders, watch for arrival.
-// Reaching the target wins; a new round starts from a new spot after a short pause.
+// Reaching the target wins; the host then shows the harbour (pay + shop) and calls next().
 import { pickRound, ordersText, fmtLat1, type Round } from '../world/rounds';
 import type { Island, World } from '../world/worldgen';
 import type { Dialogue } from '../ui/dialogue';
 import type { Toast } from '../ui/toast';
 
-const NEXT_ROUND_AFTER_S = 9;
+const HARBOUR_AFTER_S = 3; // let the arrival sink in before the pay sheet
 
 export interface RoundHost {
   placeBoat(latDeg: number, lonDeg: number, headingDeg: number): void;
@@ -14,11 +14,14 @@ export interface RoundHost {
   setOrders(text: string | null): void;
   /** Called when the player has seen an island up close (it goes on the chart). */
   discover(isl: Island): void;
+  /** Round won: show the harbour; call next() when the player sets sail. */
+  won(r: Round, next: () => void): void;
 }
 
 export class RoundRunner {
   round: Round;
   private wonAtS: number | null = null;
+  private harbourShown = false;
   private startGameS = 0;
 
   constructor(private readonly world: World, private readonly seed: number, n: number,
@@ -30,6 +33,7 @@ export class RoundRunner {
   start(nowS: number): void {
     const r = this.round;
     this.wonAtS = null;
+    this.harbourShown = false;
     this.host.placeBoat(r.startLatDeg, r.startLonDeg, r.startHeadingDeg);
     this.startGameS = this.host.setHour(r.hour);
     this.host.setOrders(ordersText(r));
@@ -48,14 +52,17 @@ export class RoundRunner {
     }
     this.wonAtS = nowS;
     const hours = (gameS - this.startGameS) / 3600;
-    this.toast.show(`${isl.name}. Made it.`, `Round ${this.round.n} done in ${hours.toFixed(1)} hours at sea. Next orders shortly.`, nowS, NEXT_ROUND_AFTER_S);
+    this.toast.show(`${isl.name}. Made it.`, `Round ${this.round.n} done in ${hours.toFixed(1)} hours at sea.`, nowS, HARBOUR_AFTER_S + 1);
     this.dialogue.say('round.win', nowS);
   }
 
   update(nowS: number): void {
-    if (this.wonAtS === null || nowS - this.wonAtS < NEXT_ROUND_AFTER_S) return;
-    this.round = pickRound(this.world, this.seed, this.round.n + 1);
-    this.start(nowS);
+    if (this.wonAtS === null || this.harbourShown || nowS - this.wonAtS < HARBOUR_AFTER_S) return;
+    this.harbourShown = true;
+    this.host.won(this.round, () => {
+      this.round = pickRound(this.world, this.seed, this.round.n + 1);
+      this.start(performance.now() / 1000);
+    });
   }
 
   get targetLatLabel(): string { return fmtLat1(this.round.target.latDeg); }

@@ -4,7 +4,7 @@ import { parseHour, parseScenario, DEFAULT_SCENARIO } from '../src/debug/params'
 describe('parseScenario', () => {
   it('uses defaults and the fallback seed when empty', () => {
     const s = parseScenario('', 777);
-    expect(s).toEqual({ ...DEFAULT_SCENARIO, seed: 777, round: 1 }); // bare URL = play round 1
+    expect(s).toEqual({ ...DEFAULT_SCENARIO, seed: 777, title: true, hour: 19.4 }); // bare URL = title screen at dusk
   });
 
   it('parses the full design example', () => {
@@ -72,11 +72,13 @@ describe('M2 params', () => {
 });
 
 describe('M4 params', () => {
-  it('round: explicit, default on a bare URL, off when a position/step is given', () => {
+  it('round: explicit, default with just a seed, off when a position/step is given; bare URL = title', () => {
     expect(parseScenario('?round=3', 1).round).toBe(3);
     expect(parseScenario('?seed=5', 1).round).toBe(1);
     expect(parseScenario('?lat=10', 1).round).toBeNull();
     expect(parseScenario('?step=2', 1).round).toBeNull();
     expect(parseScenario('?at=helm&round=2', 1).round).toBe(2);
+    expect(parseScenario('', 1)).toMatchObject({ round: null, title: true });
+    expect(parseScenario('?seed=3&round=4&resume=1', 1)).toMatchObject({ round: 4, title: false, resume: true });
   });
 });

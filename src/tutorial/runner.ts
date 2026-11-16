@@ -98,7 +98,6 @@ export class TutorialRunner {
     if (this.stepI + 1 < STEPS.length) { this.stepI++; this.enterStep(false); return; }
     this.finished = true;
     this.dialogue.say('tutorial.end', nowS);
-    this.host.setInstruments(['hand', 'kamal', 'quadrant']);
     this.host.setOverlay(NO_OVERLAY);
     this.goalEl.remove(); // the orders card takes this slot
     this.host.finished();

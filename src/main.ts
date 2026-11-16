@@ -26,7 +26,12 @@ import { WorldSim } from './app/worldSim';
 import { RoundRunner } from './app/rounds';
 import { ParrotNags } from './app/nags';
 import { OrdersCard } from './ui/ordersCard';
-import { roundHost, tutorialHost, kamalKnots, type GameRef } from './app/hosts';
+import { roundHost, tutorialHost, kamalKnots, restoreChart, type GameRef } from './app/hosts';
+import { Career } from './app/career';
+import { Harbour } from './ui/harbour';
+import { showTitle } from './ui/title';
+import { loadProgress } from './app/save';
+import type { InstrumentId } from './ui/instrumentOverlay';
 import { tutorialIsland } from './world/tutorialIsland';
 import { setHazeColor } from './render/haze';
 import './ui/theme.css';
@@ -118,15 +123,22 @@ const game: GameRef = {
 const tIsland = tutorialIsland(worldSim.world);
 const ordersCard = new OrdersCard();
 // Rounds (core loop): bare URL, ?round=N, or after the tutorial's graduation.
+const career = new Career(scenario.seed, scenario.round ?? 1, scenario.resume);
+const harbour = new Harbour();
+const applyInstruments = () => { nav.available = new Set(career.instruments as InstrumentId[]); };
 const rounds: RoundRunner | null = scenario.round === null && scenario.step === null ? null
-  : new RoundRunner(worldSim.world, scenario.seed, scenario.round ?? 1, roundHost(game, ordersCard, (): RoundRunner | null => rounds), dialogue, worldSim.toast);
+  : new RoundRunner(worldSim.world, scenario.seed, career.progress.round, roundHost(game, ordersCard, (): RoundRunner | null => rounds,
+    (r, next) => career.won(r, worldSim.hullScrapes, nav.chart.known.map((k) => k.name), harbour, applyInstruments, next)), dialogue, worldSim.toast);
 const startRounds = () => {
   if (!rounds) return;
+  applyInstruments();
+  restoreChart(game, career.progress.known);
   worldSim.onArrive = (isl, nowS) => rounds.onArrive(isl, nowS, clock.gameSeconds);
   rounds.start(performance.now() / 1000);
 };
 const tutorial = scenario.step === null ? null : new TutorialRunner(scenario.step, tutorialHost(game, tIsland, startRounds), dialogue, choice);
 if (tutorial) nav.setKamalKnots(kamalKnots(game, tIsland, ' (lesson)'));
+else if (scenario.title) showTitle(loadProgress(), Math.floor(Math.random() * 1e6));
 else startRounds();
 if (scenario.debug) Object.assign((window as unknown as { __game: object }).__game, {
   rounds, worldSim, tutorial, tIsland: () => tIsland, teleport: (latDeg: number, lonDeg: number) => { boat = { ...boat, x: lonDeg * M_PER_DEG, z: -latDeg * M_PER_DEG }; },
@@ -157,7 +169,7 @@ function islandDebug(): string {
   return p?.island ? `near ${p.island.name} (${p.island.kind}${p.island.port ? ', port' : ''}) ${p.shoreDistM.toFixed(0)} m${p.onReef ? ' REEF' : ''}` : '';
 }
 
-const uiBlocked = () => nav.chart.isOpen || choice.isOpen;
+const uiBlocked = () => nav.chart.isOpen || choice.isOpen || harbour.isOpen;
 
 function handleKeys(): void {
   if (input.pressed('KeyC')) celestial.overlay = celestial.overlay === FULL_OVERLAY ? NO_OVERLAY : FULL_OVERLAY;

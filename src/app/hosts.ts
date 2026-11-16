@@ -85,7 +85,7 @@ function discover(g: GameRef, isl: Island): void {
   if (!g.nav.chart.known.some((k) => k.name === isl.name)) g.nav.chart.known.push({ name: isl.name, latDeg: isl.latDeg, lonDeg: isl.lonDeg });
 }
 
-export function roundHost(g: GameRef, card: OrdersCard, rounds: () => RoundRunner | null): RoundHost {
+export function roundHost(g: GameRef, card: OrdersCard, rounds: () => RoundRunner | null, won: RoundHost['won']): RoundHost {
   return {
     placeBoat: (latDeg, lonDeg, h0) => {
       Object.assign(g.wind, g.worldSim.windAt(latDeg, lonDeg, g.clock.gameSeconds)); // trim for the wind actually there
@@ -93,6 +93,7 @@ export function roundHost(g: GameRef, card: OrdersCard, rounds: () => RoundRunne
       g.boat = { ...g.boat, headingDeg, speedMs: 4, trimDeg: optimalTrim(trueWindAngle(headingDeg, g.wind.fromDeg)) };
       moveTo(g, latDeg, lonDeg);
       atStation(g, 'helm');
+      g.worldSim.hullScrapes = 0; // repaired in harbour between rounds
     },
     setHour: (h) => { // always forward: the next time it's h o'clock
       const t = dayNumber(g.clock) * 86400 + h * 3600;
@@ -106,5 +107,11 @@ export function roundHost(g: GameRef, card: OrdersCard, rounds: () => RoundRunne
       g.nav.setKamalKnots(kamalKnots(g, r?.round.target ?? null, ' (orders)'));
     },
     discover: (isl) => discover(g, isl),
+    won,
   };
+}
+
+/** Put islands from a saved career back on the chart. */
+export function restoreChart(g: GameRef, names: string[]): void {
+  for (const isl of g.worldSim.world.islands) if (names.includes(isl.name)) discover(g, isl);
 }

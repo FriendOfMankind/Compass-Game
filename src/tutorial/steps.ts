@@ -180,7 +180,7 @@ export const STEPS: readonly Step[] = [
     ],
   },
   {
-    n: 10, title: 'Graduation', setup: { instruments: ['hand', 'kamal', 'quadrant'] },
+    n: 10, title: 'Graduation', setup: { instruments: ['hand', 'kamal'] }, // the quadrant is bought (DESIGN §5)
     goals: [{
       text: 'No more hints. Orders come next: an exact latitude and a vague direction. Off you go', intro: 'tutorial.step10.intro',
       done: 'tutorial.step10.done', holdS: 6, check: () => true,

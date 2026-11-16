@@ -109,3 +109,28 @@ kbd {
   position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
   font: italic 14px var(--serif); color: var(--ink-soft); pointer-events: none; white-space: nowrap;
 }
+
+/* Harbour (between rounds) + title screen. */
+#harbour { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, 92vw); padding: 18px 22px; }
+#harbour .pay { margin: 8px 0 12px; font-size: 15px; }
+#harbour .pay div { display: flex; justify-content: space-between; border-bottom: 1px dotted rgba(58,36,20,.3); padding: 2px 0; }
+#harbour .pay .total { font-weight: bold; border-bottom: none; border-top: 1px solid var(--ink-soft); margin-top: 4px; }
+#harbour .shop > div { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 15px; }
+#harbour i { font-size: 13px; color: var(--ink-soft); }
+#harbour button, #title button {
+  font: 15px var(--serif); color: var(--ink); cursor: pointer; padding: 6px 14px;
+  background: linear-gradient(#fbf0d6, var(--paper-dark)); border: 1px solid var(--ink-soft); border-bottom-width: 3px; border-radius: 5px;
+}
+#harbour button:disabled { opacity: 0.45; cursor: default; }
+#harbour .sail { display: block; margin: 14px auto 0; font-size: 17px; background: var(--brass); }
+
+#title {
+  position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: radial-gradient(ellipse at 50% 35%, rgba(10, 18, 40, 0.35), rgba(2, 4, 12, 0.85));
+}
+#title h1 { font: 64px/1 var(--display); color: #f6e6c2; margin: 0; text-shadow: 0 3px 12px rgba(0,0,0,0.8); letter-spacing: 0.04em; }
+#title .sub { font: italic 18px var(--serif); color: #e2c58f; margin-bottom: 18px; text-shadow: 0 2px 6px rgba(0,0,0,0.8); }
+#title button { width: 280px; font-size: 18px; }
+#title .credits { max-width: 560px; padding: 16px 20px; font-size: 14px; display: none; }
+#title .credits a { color: var(--rust); }
+body.title-open #hud-bottom, body.title-open #reticle, body.title-open #parrot { display: none !important; }
