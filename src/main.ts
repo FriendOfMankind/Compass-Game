@@ -75,11 +75,19 @@ const input = new Input();
 const prompt = new Prompt();
 const hud = scenario.debug ? new DebugHud() : null;
 const camWorld = new THREE.Vector3();
+const lookDir = new THREE.Vector3();
 
 // --- loop -------------------------------------------------------------------
 let lastMs = performance.now();
 let fps = 60;
 let frames = 0;
+
+/** Where the eyes point, in compass azimuth + altitude (world axes: +X east, −Z north). */
+function lookAngles(): { lookAzDeg: number; lookAltDeg: number } {
+  fp.camera.getWorldDirection(lookDir);
+  const az = THREE.MathUtils.radToDeg(Math.atan2(lookDir.x, -lookDir.z));
+  return { lookAzDeg: (az + 360) % 360, lookAltDeg: THREE.MathUtils.radToDeg(Math.asin(THREE.MathUtils.clamp(lookDir.y, -1, 1))) };
+}
 
 function handleKeys(): void {
   if (input.pressed('KeyC')) celestial.linesVisible = !celestial.linesVisible;
@@ -166,6 +174,7 @@ function frame(nowMs: number): void {
     headingDeg: boat.headingDeg,
     speedMs: boat.speedMs,
     windText: `from ${wind.fromDeg.toFixed(0)}°  twa ${tel.twaDeg.toFixed(0)}°  trim ${boat.trimDeg.toFixed(0)}°  eff ${(tel.efficiency * 100).toFixed(0)}%${tel.luffing ? ' LUFF' : ''}`,
+    ...lookAngles(),
     lstText: `${(sky.lstDeg / 15).toFixed(2)}h  sun ${sky.sunAltDeg.toFixed(1)}°`,
     timeText: `day ${dayNumber(clock)} ${formatHour(hour)}  warp ×${warp.warp.toFixed(1)}  [${mode}]`,
     fps,
