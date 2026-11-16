@@ -29,6 +29,8 @@ export interface Scenario {
   round: number | null;
   title: boolean;
   resume: boolean;
+  /** Cloud cover 0..1 (&clouds=); null = clear, or the round's weather. */
+  clouds: number | null;
 }
 
 export type Station = 'deck' | 'helm' | 'mast' | 'chart';
@@ -69,6 +71,7 @@ export const DEFAULT_SCENARIO: Omit<Scenario, 'seed'> = {
   round: null,
   title: false,
   resume: false,
+  clouds: null,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -123,6 +126,7 @@ export function parseScenario(search: string, fallbackSeed: number): Scenario {
     round: parseRound(p),
     title,
     resume: flag(p.get('resume')),
+    clouds: num(p.get('clouds')) === null ? null : clamp(num(p.get('clouds'))!, 0, 1),
   };
 }
 

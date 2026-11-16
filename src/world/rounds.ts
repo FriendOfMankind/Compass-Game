@@ -15,6 +15,7 @@ export interface Round {
   startHeadingDeg: number;
   hour: number;               // home time; always after dark so the stars are up
   direction: 'east' | 'west'; // the only hint about longitude
+  cloudCover: number;         // 0 clear … ~0.65 mostly overcast (DESIGN §6: cloudy nights force DR)
 }
 
 const DLAT = [1.5, 5] as const;  // keeps trips to a few minutes of play
@@ -36,9 +37,17 @@ export function pickRound(world: World, seed: number, n: number): Round {
       startHeadingDeg: Math.floor(rnd() * 8) * 45,
       hour: (19.5 + rnd() * 7) % 24,
       direction: dLon > 0 ? 'east' : 'west',
+      cloudCover: cloudsFor(n, rnd),
     };
   }
   throw new Error(`rounds: no start found for round ${n}`);
+}
+
+/** First two rounds are clear (learn first); after that, 40% of nights are cloudy. */
+function cloudsFor(n: number, rnd: () => number): number {
+  const r = rnd(), amount = rnd();
+  if (n <= 2) return 0;
+  return r < 0.4 ? 0.35 + amount * 0.3 : amount * 0.12;
 }
 
 export const fmtLat1 = (d: number) => `${Math.abs(d).toFixed(1)}°${d >= 0 ? 'N' : 'S'}`;

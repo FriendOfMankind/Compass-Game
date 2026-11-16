@@ -20,6 +20,14 @@ describe('rounds', () => {
       }
     });
   }
+  it('clouds: clear for the first two rounds, some cloudy nights later, never fully overcast', () => {
+    const w = generateWorld(4);
+    expect(pickRound(w, 4, 1).cloudCover).toBe(0);
+    expect(pickRound(w, 4, 2).cloudCover).toBe(0);
+    const later = Array.from({ length: 40 }, (_, i) => pickRound(w, 4, i + 3).cloudCover);
+    expect(later.filter((c) => c > 0.3).length).toBeGreaterThan(5);
+    expect(Math.max(...later)).toBeLessThanOrEqual(0.65);
+  });
   it('is deterministic and varies by round', () => {
     const w = generateWorld(9);
     expect(pickRound(w, 9, 3)).toEqual(pickRound(w, 9, 3));

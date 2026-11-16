@@ -14,6 +14,7 @@ import { horizontalToVector } from './astro/transform';
 import { Water } from './render/water';
 import { Ship, DECK_Y } from './render/ship';
 import { Lighting } from './render/lighting';
+import { Clouds } from './render/clouds';
 import { Input } from './ui/input';
 import { Prompt } from './ui/prompt';
 import { Dialogue } from './ui/dialogue';
@@ -57,7 +58,8 @@ const celestial = new Celestial(scene, renderer.getPixelRatio());
 celestial.overlay = scenario.lines ? FULL_OVERLAY : NO_OVERLAY;
 const water = new Water();
 const ship = new Ship();
-scene.add(water.mesh, ship.root);
+const clouds = new Clouds();
+scene.add(water.mesh, ship.root, clouds.mesh);
 const lighting = new Lighting(scene, ship.root, renderer);
 // Game clock reads HOME TIME (UT at the patch's 0° meridian). JD = start date + clock.
 const jdStart = julianDate(scenario.date.year, scenario.date.month, scenario.date.day);
@@ -231,6 +233,8 @@ function frame(nowMs: number): void {
   const hour = hourOfDay(clock);
   const latDeg = -boat.z / M_PER_DEG, lonDeg = boat.x / M_PER_DEG;
   const sky = celestial.update(jdStart + clock.gameSeconds / 86400, latDeg, lonDeg, camWorld);
+  clouds.cover = scenario.clouds ?? (rounds && !tutorial?.active ? rounds.round.cloudCover : 0);
+  clouds.update(camWorld, clock.gameSeconds, sky.daylight, sky.sunAltDeg);
   const light = sky.daylight;
   (scene.fog as THREE.Fog).color.copy(sky.horizon);
   setHazeColor(sky.horizon);
