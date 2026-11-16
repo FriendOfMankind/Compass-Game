@@ -71,6 +71,12 @@ const lookingAtStar = (c: TutorialCtx, name: string, tolDeg: number) => {
   const h = starHz(c, name);
   return h.altDeg > 0 && lookDistanceDeg(c, h.altDeg, h.azDeg) < tolDeg;
 };
+/** Facing the star (azimuth only, any pitch). Hand and kamal are drawn from the horizon at the
+ *  look azimuth, so the player watches the horizon/fists, not the star: don't demand they centre it. */
+const facingStar = (c: TutorialCtx, name: string, tolAzDeg: number) => {
+  const h = starHz(c, name);
+  return h.altDeg > 0 && Math.abs(((c.lookAzDeg - h.azDeg + 540) % 360) - 180) < tolAzDeg;
+};
 
 const fmtLat = (d: number) => `${Math.abs(Math.round(d))}°${d >= 0 ? 'N' : 'S'}`;
 
@@ -114,9 +120,9 @@ export const STEPS: readonly Step[] = [
   {
     n: 6, title: 'Measure with your hand', setup: { at: 'helm', hour: 21.4, latDeg: 12, headingDeg: 90, windFromDeg: 0, instruments: ['hand'] },
     goals: [{
-      text: 'Hold right-click to raise your fist. Count fists from the horizon up to Polaris', intro: 'tutorial.step6.intro', hint: 'tutorial.step6.hint',
+      text: 'Face Polaris and hold right-click to raise your fists. Count fists from the horizon up to the star', intro: 'tutorial.step6.intro', hint: 'tutorial.step6.hint',
       hintAfterS: 30, done: 'tutorial.step6.done', holdS: 1.5, overlay: { constellations: ['UMa'], polaris: true },
-      check: (c) => c.raised && c.instrument === 'hand' && lookingAtStar(c, 'Polaris', 8),
+      check: (c) => c.raised && c.instrument === 'hand' && facingStar(c, 'Polaris', 10),
       question: {
         key: 'tutorial.step6.ask', text: 'Polaris is about how high, and so what is our latitude?', wrong: 'tutorial.step6.wrong',
         options: (c) => {
@@ -132,9 +138,9 @@ export const STEPS: readonly Step[] = [
     n: 7, title: 'Latitude sailing', setup: { at: 'helm', hour: 21.6, atTutorialStart: true, headingDeg: 0, windFromDeg: 160, instruments: ['hand', 'kamal'] },
     goals: [
       {
-        text: 'Switch to the kamal (2), raise it (hold right-click) and put its top edge on Polaris', intro: ['tutorial.step7.intro', 'tutorial.step7.kamal'], hint: 'tutorial.step7.kamalHint',
+        text: 'Switch to the kamal (2), face Polaris and hold right-click to raise it', intro: ['tutorial.step7.intro', 'tutorial.step7.kamal'], hint: 'tutorial.step7.kamalHint',
         hintAfterS: 25, done: 'tutorial.step7.kamalDone', holdS: 1, overlay: { polaris: true },
-        check: (c) => c.raised && c.instrument === 'kamal' && lookingAtStar(c, 'Polaris', 8),
+        check: (c) => c.raised && c.instrument === 'kamal' && facingStar(c, 'Polaris', 10),
       },
       {
         text: 'Sail north until Polaris sits on the {island} knot ({islandLat}). Check with the kamal as you go', intro: 'tutorial.step7.north', hint: 'tutorial.step7.northHint',

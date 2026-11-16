@@ -91,6 +91,10 @@ describe('tutorial steps', () => {
     const c = lookAt('Polaris', 12, 21.4);
     expect(goal(6).check(c)).toBe(false);
     expect(goal(6).check({ ...c, raised: true })).toBe(true);
+    // Facing Polaris but looking at the horizon or above it still counts (players watch the fists).
+    expect(goal(6).check({ ...c, raised: true, lookAltDeg: 0 })).toBe(true);
+    expect(goal(6).check({ ...c, raised: true, lookAltDeg: 30 })).toBe(true);
+    expect(goal(6).check({ ...c, raised: true, lookAzDeg: c.lookAzDeg + 25 })).toBe(false);
     const q = goal(6).question!.options(c);
     expect(q.labels[q.correct]).toContain('12°N');
     expect(new Set(q.labels).size).toBe(q.labels.length);

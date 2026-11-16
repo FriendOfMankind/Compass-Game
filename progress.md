@@ -118,6 +118,7 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 - Daytime spawns: wait for night (anchor fast-forward) until the noon-sun sight exists?
 
 ## Known bugs / rough edges
+- FIXED (Colin's playtest, step 6): the fist step needed the crosshair within 8° of Polaris, but players look at the fists/horizon, so nothing happened. Steps 6 and 7 now only need you FACING Polaris (±10° azimuth). Captions shortened (they ran under the goal card). Also fixed a wrong fact: kamal caption + a step 7 hint had "star above the knot" backwards (above = you're north of it).
 - M6: the economy, cloud frequency and chronometer difficulty are untested by a human. Timing a star's highest point is fiddly (it's flat at the top); ±5 game-min = ±1.25° of longitude.
 - M6: no longitude ruler on the chart: you work out longitude from the chronometer and keep it in your head (or mark DR). Could add later.
 - M6: the almanac box on the chart covers the latitude labels on the right edge.
@@ -141,6 +142,9 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 - No Milky Way (DESIGN: only if cheap). Skipped for now.
 
 ## Playtest notes (Colin)
+### M6 playtest (Colin, in progress)
+- Stuck on step 6 (fist on Polaris): the quiz never appeared. Fixed, see Known bugs.
+
 ### M6: please answer these
 `http://localhost:5173/` → title → New voyage. Play until you can buy the chronometer.
 1. How long did it take? (target 30–60 min including the tutorial)

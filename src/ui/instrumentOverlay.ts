@@ -73,7 +73,7 @@ export class InstrumentOverlay {
       c.font = '13px Georgia, serif';
       c.fillText(`${(f + 1) * 10}°`, x + w + 6, y + 12);
     }
-    this.caption('Hand at arm\'s length: fist ≈ 10°, finger ≈ 2°. Bottom fist sits on the horizon.');
+    this.caption('Fist ≈ 10°, finger ≈ 2°. Count up from the horizon to the star.');
     const n = handCount(o.lookAltDeg);
     void n; // the count is the player's job; no auto-solve (DESIGN §5)
   }
@@ -93,7 +93,7 @@ export class InstrumentOverlay {
     c.beginPath(); c.moveTo(x + w / 2, (tr.y + bl.y) / 2); c.lineTo(window.innerWidth / 2, window.innerHeight + 10); c.stroke();
     c.fillStyle = 'rgba(255, 240, 210, 0.95)'; c.font = '14px Georgia, serif';
     c.fillText(`knot: ${o.kamalKnotLabel}`, x + w + 8, tr.y + 5);
-    this.caption('Kamal: bottom edge on the horizon. Star above the top edge = you\'re further from the pole than this knot. Scroll to change knot.');
+    this.caption('Kamal: star above the top edge = you\'re north of this knot. Scroll: change knot.');
   }
 
   private quadrant(o: OverlayInput): void {
@@ -117,7 +117,7 @@ export class InstrumentOverlay {
     c.beginPath(); c.moveTo(ox, oy); c.lineTo(ox + Math.cos(plumb) * (R + 6), oy + Math.sin(plumb) * (R + 6)); c.stroke();
     c.fillStyle = 'rgba(255, 245, 225, 0.95)'; c.font = 'bold 22px Georgia, serif';
     c.fillText(`${o.quadrantReadingDeg.toFixed(1)}°`, ox - R - 10, oy - 12);
-    this.caption('Quadrant: put the star on the sight line. The plumb bob swings with the boat; read between swings.');
+    this.caption('Quadrant: star on the sight line. Read between the plumb\'s swings.');
   }
 
   /** Pocket chronometer (home time) + your meridian drawn on the sky, due north and due south. */
@@ -157,7 +157,7 @@ export class InstrumentOverlay {
     c.fillText(`${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`, cx, cy + R * 0.45);
     c.font = 'italic 11px Georgia, serif'; c.fillText('home time', cx, cy - R * 0.35);
     c.textAlign = 'start';
-    this.caption('Chronometer: note the home time a star crosses your meridian (highest point). Compare with the almanac on the chart.');
+    this.caption('Chronometer: home time when a star crosses your meridian. See the chart\'s almanac.');
   }
 
   private caption(text: string): void {
