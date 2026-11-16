@@ -57,3 +57,16 @@ describe('M1 params', () => {
     expect(s).toMatchObject({ windFromDeg: 60, at: 'deck', speedMs: 0 });
   });
 });
+
+describe('M2 params', () => {
+  it('date, pitch, lines', () => {
+    const s = parseScenario('?date=2026-03-01&pitch=30&lines=1', 1);
+    expect(s.date).toEqual({ year: 2026, month: 3, day: 1 });
+    expect(s.pitchDeg).toBe(30);
+    expect(s.lines).toBe(true);
+  });
+  it('bad date falls back to mid-April default', () => {
+    expect(parseScenario('?date=2026-13-40', 1).date).toEqual({ year: 2026, month: 4, day: 15 });
+    expect(parseScenario('?date=yesterday', 1).date).toEqual({ year: 2026, month: 4, day: 15 });
+  });
+});

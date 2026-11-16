@@ -1,29 +1,30 @@
 import * as THREE from 'three';
 
-// M0 placeholder sky: vertical gradient dome whose colours follow time of day.
-// No sun or stars yet (M2). Daylight is a crude function of hour, not real solar altitude.
+// Sky gradient dome. Colours follow the REAL sun altitude (from astro/), so dusk at
+// 20°N and 20°S differ correctly and longitude shifts local time.
 
 interface Palette { zenith: THREE.Color; horizon: THREE.Color; }
 
-const NIGHT: Palette = { zenith: new THREE.Color('#02040d'), horizon: new THREE.Color('#0c1730') };
+const NIGHT: Palette = { zenith: new THREE.Color('#010208'), horizon: new THREE.Color('#070d1c') };
 const TWILIGHT: Palette = { zenith: new THREE.Color('#1c2a5a'), horizon: new THREE.Color('#f08a4b') };
 const DAY: Palette = { zenith: new THREE.Color('#2a7fd4'), horizon: new THREE.Color('#bfe6f5') };
 
-/** 0 = full night, 1 = full day. Sunrise ~6h, sunset ~18h, ~1h of twilight each side. */
-export function daylight(hour: number): number {
-  const sunHeight = Math.sin(((hour - 6) / 12) * Math.PI); // +1 at noon, −1 at midnight
-  return THREE.MathUtils.smoothstep(sunHeight, -0.2, 0.25);
+/** 0 = full night (sun below −12°, nautical twilight over), 1 = full day (sun above +6°). */
+export function daylightFromSunAlt(sunAltDeg: number): number {
+  return THREE.MathUtils.smoothstep(sunAltDeg, -12, 6);
 }
 
-function paletteFor(hour: number): Palette {
-  const d = daylight(hour);
-  // Twilight weight peaks near d = 0.5 (dawn/dusk).
-  const t = 1 - Math.abs(d - 0.5) * 2;
-  const base = { zenith: NIGHT.zenith.clone().lerp(DAY.zenith, d), horizon: NIGHT.horizon.clone().lerp(DAY.horizon, d) };
-  return {
-    zenith: base.zenith.lerp(TWILIGHT.zenith, t * 0.5),
-    horizon: base.horizon.lerp(TWILIGHT.horizon, t * 0.75),
-  };
+/** How visible stars are: 0 in daylight, 1 once the sun is below −10° (DESIGN: stars are a night tool). */
+export function starVisibility(sunAltDeg: number): number {
+  return 1 - THREE.MathUtils.smoothstep(sunAltDeg, -10, -2);
+}
+
+function paletteFor(sunAltDeg: number): Palette {
+  const d = daylightFromSunAlt(sunAltDeg);
+  const t = Math.max(0, 1 - Math.abs(sunAltDeg + 2) / 8); // twilight glow peaks with the sun just under the horizon
+  const zenith = NIGHT.zenith.clone().lerp(DAY.zenith, d).lerp(TWILIGHT.zenith, t * 0.45);
+  const horizon = NIGHT.horizon.clone().lerp(DAY.horizon, d).lerp(TWILIGHT.horizon, t * 0.7);
+  return { zenith, horizon };
 }
 
 export class Sky {
@@ -57,22 +58,16 @@ export class Sky {
     });
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat);
     this.mesh.scale.setScalar(1000);
-    this.mesh.renderOrder = -1;
+    this.mesh.renderOrder = -2;
     this.mesh.frustumCulled = false;
   }
 
-  /** Updates colours; returns the horizon colour so fog/ocean can match it. */
-  update(hour: number, camWorldPos: THREE.Vector3): THREE.Color {
-    const p = paletteFor(hour);
+  /** Returns the horizon colour so fog/water can match it. */
+  update(sunAltDeg: number, camWorldPos: THREE.Vector3): THREE.Color {
+    const p = paletteFor(sunAltDeg);
     this.uniforms.uZenith.value.copy(p.zenith);
     this.uniforms.uHorizon.value.copy(p.horizon);
     this.mesh.position.copy(camWorldPos);
     return p.horizon;
   }
-}
-
-/** Crude placeholder sun: rises due east at 6h, sets due west at 18h, slightly south. Real sun in M2. */
-export function sunDirection(hour: number, out = new THREE.Vector3()): THREE.Vector3 {
-  const a = ((hour - 6) / 12) * Math.PI;
-  return out.set(Math.cos(a), Math.max(Math.sin(a), 0.05), 0.35).normalize();
 }

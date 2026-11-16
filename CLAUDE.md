@@ -6,7 +6,7 @@ First-person pirate sailing game teaching real celestial navigation. **Read `DES
 - `npm run dev`: dev server
 - `npm test`: vitest (pure logic)
 - `npm run shot -- "<url>" out.png`: Playwright screenshot of a scenario. `<url>` can be just a query string (`"?lat=12&time=night&debug=1"`); the script starts its own Vite server. Locally you need `npm i -D playwright && npx playwright install chromium` once (not needed in the cloud container, which has it preinstalled).
-- `npm run build-stars`: regenerate `src/data/stars.json` from HYG CSV
+- `npm run build-stars [-- path/to.csv]`: regenerate `src/data/stars.json` from HYG v4.1 (downloads from the GitHub mirror if no path)
 
 ## Rules
 - Work only on the current milestone in `progress.md`. Put ideas under "Ideas / later" instead of building them.
@@ -22,4 +22,7 @@ First-person pirate sailing game teaching real celestial navigation. **Read `DES
 ## Conventions
 - TypeScript strict. Angles in degrees at API boundaries, radians internally; suffix variables `Deg`/`Rad`.
 - Units: 1° latitude = 600 world units. Game day = 20 real minutes.
+- World axes: +X east, +Y up, −Z north. Heading/azimuth 0° = north, clockwise.
+- Game clock = home time (UT at the patch's 0° meridian). JD = start date + clock.
+- PowerShell (Windows) for any commands given to Colin: no `&&`, one command per block.
 - Parrot dialogue lives in `src/content/parrot.json`, never hardcoded.
