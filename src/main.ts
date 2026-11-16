@@ -87,9 +87,9 @@ function handleStations(): void {
 function promptText(tel: ReturnType<typeof telemetry>): string {
   const warpLine = warp.warp > 1.05 ? `\nmaking way  ≫ ×${warp.warp.toFixed(1)}` : '';
   const sailLine = tel.twaDeg < 38 ? 'in irons: bow is in the wind'
-    : tel.luffing ? 'sail is luffing: sheet in at the mast'
-    : tel.efficiency < 0.75 ? 'sail is over-sheeted: ease it at the mast' : '';
-  if (mode === 'helm') return `A / D  steer    ·    E  let go${sailLine ? `\n${sailLine}` : ''}${warpLine}`;
+    : tel.luffing ? 'sail is luffing: sheet in (W)'
+    : tel.efficiency < 0.75 ? 'sail is over-sheeted: ease out (S)' : '';
+  if (mode === 'helm') return `A / D  steer    ·    W / S  trim sail    ·    E  let go${sailLine ? `\n${sailLine}` : ''}${warpLine}`;
   if (mode === 'mast') return `W  sheet in    ·    S  ease out    ·    E  let go\n${sailLine || 'sail is drawing nicely'}`;
   const st = nearestStation(player);
   return st ? `E  ${st.label}` : 'WASD walk  ·  mouse look  (click to capture mouse)';
@@ -104,7 +104,7 @@ function frame(nowMs: number): void {
   if (mode === 'deck') player = walk(player, input.axis('KeyS', 'KeyW'), input.axis('KeyA', 'KeyD'), fp.yawRad, dt);
   const boatInput = {
     steer: mode === 'helm' ? input.axis('KeyA', 'KeyD') : 0,
-    trim: mode === 'mast' ? input.axis('KeyS', 'KeyW') : 0,
+    trim: mode === 'mast' || mode === 'helm' ? input.axis('KeyS', 'KeyW') : 0,
   };
 
   warp = stepWarp(warp, {
