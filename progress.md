@@ -1,8 +1,10 @@
 # progress.md
 
 ## Current milestone
-M3.5: Look & feel: BUILT, awaiting Colin's verdict ("looks better and clearer?") + an FPS check on his machine (shadows are new).
-M3 playtest answers are still outstanding. Next: M4 (world: islands, ports, trade winds + tutorial steps 7, 8, 10). M4 islands use the Kenney kit.
+M4, split in two (Colin said "keep going" after M3.5 was merged to main):
+- **M4a: the world**: BUILT (islands, wind field, reefs, landing, haze, end-to-end voyage test).
+- **M4b: the loop**: NEXT. Rounds (random start + target island, described by exact latitude + vague direction per DESIGN §7), kamal knots = port latitudes, discovered islands on the chart, tutorial steps 7, 8, 10.
+M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and so are the M3 playtest answers.
 
 ### Session handoff (2026-11-16)
 - Last thing fixed: chart table wouldn't open (the E that opened it also closed it in the same frame). Fixed in `src/app/navigation.ts` (`chartCloseArmed`), verified in-browser: E opens, E closes, E reopens, Esc closes.
@@ -57,6 +59,14 @@ M3 playtest answers are still outstanding. Next: M4 (world: islands, ports, trad
   - Control hints are key-cap chips that fade after 3 uses each; station prompts and "Click to look around" stay; H shows all hints again (`ui/prompt.ts`, `app/controls.ts`). Status line (sail warnings, log, warp) above them.
   - Chart: parchment, compass rose, tool buttons. **Latitude lines are ruled by dragging a ruler** (live 0.1° label, release to rule, right-click/Esc cancels), "Erase last line" undoes. Typed input removed. Pure `rulerLatitude()` + `undoLatLine()` in `nav/dr.ts`, tested.
 
+- **M4a: The world (built)**
+  - `world/worldgen.ts`: seeded archipelagos (8–14 islands, 2–4 groups). Every island ≥ 1.5° of latitude from every other; ≥ 2 north and ≥ 2 south of the equator (one group forced each side); ≥ 1 in the doldrums (|lat| < 3°); one port per group (named "Port …"; only ports may be). Kinds: peak / atoll / twin, each with a blurb from `content/islands.json`. Reefs have a pass (gap) at a seeded bearing. `validateWorld()` holds the rules; tests run 110 seeds.
+  - `world/wind.ts`: NE trades north of ~5°N, SE trades south of ~5°S, doldrums between (strength 0.3, direction wanders over minutes). Slow wobble. `?wind=` still pins a steady wind; the tutorial pins its own.
+  - `world/terrain.ts`: island height = noise coastline + per-kind profile; `world/hazards.ts`: nearest island, reef (outside the pass only), aground, arrived (≤ 120 m from shore), warp blocked within 700 m.
+  - `app/worldSim.ts`: reef → hull scrape + speed loss + parrot; aground → pushed off + parrot; arrival → parchment card with name + blurb; doldrums enter/exit lines. Hull scrapes shown in the status line.
+  - Render: `render/islands.ts` (vertex-coloured terrain, Kenney palms, shore rocks, reef coral-head line with visible pass, dock + huts + flag on ports; loaded lazily within 1.5 km). `render/haze.ts`: islands fade to the horizon colour between 180 and 650 m (tunable `ISLAND_VISIBLE_M`), separately from the sea fog.
+  - `tests/voyage.test.ts`: for 5 seeds, autopilot latitude-sails from a port to the farthest island in another group using the real wind, boat and hazards, and arrives.
+
 ## Decisions
 - Real star data (HYG v4.x, mag ≤ 5.0), J2000, no precession/refraction.
 - HYG license confirmed CC BY-SA 4.0 (astronexus.com/projects/hyg). Attribute in credits; share-alike likely covers the derived `stars.json`. GitHub mirror is frozen; canonical source is codeberg.org/astronexus/hyg (blocked from the cloud container — download from astronexus.com or have Colin drop the CSV in).
@@ -75,6 +85,9 @@ M3 playtest answers are still outstanding. Next: M4 (world: islands, ports, trad
 - Daytime spawns: wait for night (anchor fast-forward) until the noon-sun sight exists?
 
 ## Known bugs / rough edges
+- M4a: **longest voyages are long**: worst-case trips (farthest island, through the doldrums, tacking upwind) take 6–20 real minutes even at full ×8 warp (voyage test prints them). M4b round targets should be chosen to keep typical trips ~3–6 min, or raise MAX_WARP in open water. Colin's call.
+- M4a: islands visible only within ~650 m (by design, see Decisions). Might feel too short; it's one constant.
+- M4a: no shallow-water colour around islands; the reef is only readable by its coral heads.
 - M3.5: shadows cost GPU; unverified on real hardware (headless runs SwiftShader). If FPS drops, halve the shadow map (`render/lighting.ts`).
 - M3.5: the IM Fell font loads from Google Fonts; offline it falls back to Georgia (fine).
 - M3.5: the binnacle card is unlit (always readable at night). Real binnacles had a lamp, so it's defensible, but it is a bright spot while star-gazing.

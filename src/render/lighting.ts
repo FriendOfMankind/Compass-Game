@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LANTERN_LOCAL } from './shipProps';
+import { LANTERN_GLASS, LANTERN_LOCAL } from './shipProps';
 
 // Scene lighting: sky/sea fill, a sun that follows the REAL sun direction (from astro/)
 // and casts shadows on the ship only, and a warm deck lantern that fades in at night.
@@ -14,6 +14,8 @@ export class Lighting {
   private readonly lantern = new THREE.PointLight(0xffb35c, 0, 9, 1.6);
   private readonly sunColDay = new THREE.Color(0xfff2dc);
   private readonly sunColLow = new THREE.Color(0xffa060);
+  private readonly glassOn = new THREE.Color(0xffc777);
+  private readonly glassOff = new THREE.Color(0x6b5a3a);
 
   constructor(scene: THREE.Scene, shipRoot: THREE.Object3D, renderer: THREE.WebGLRenderer) {
     renderer.shadowMap.enabled = true;
@@ -48,5 +50,6 @@ export class Lighting {
 
     const night = 1 - THREE.MathUtils.smoothstep(daylight, 0.05, 0.5);
     this.lantern.intensity = 2.5 * night;
+    LANTERN_GLASS.color.copy(this.glassOff).lerp(this.glassOn, night);
   }
 }

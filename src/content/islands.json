@@ -1,0 +1,24 @@
+{
+  "patterns": ["Isla {adj}", "{noun} {feature}", "Port {adj}", "{adj} {feature}", "The {noun}'s {thing}"],
+  "adj": ["Regrettable", "Mediocre", "Questionable", "Damp", "Unremarkable", "Inadvisable", "Soggy", "Lesser", "Forgettable", "Overrated", "Disappointing", "Moist", "Sunburnt", "Optimistic", "Hasty", "Belated"],
+  "noun": ["Scurvy", "Biscuit", "Barnacle", "Bilge", "Mutiny", "Hardtack", "Grog", "Plank", "Gull", "Rum", "Cutlass", "Crab"],
+  "feature": ["Atoll", "Knoll", "Key", "Rock", "Cay", "Isle", "Reach", "Haven"],
+  "thing": ["Elbow", "Regret", "Lament", "Folly", "Knee", "Excuse"],
+  "blurb": {
+    "peak": [
+      "A volcano with one tall cone. Visible from far off, which is its only virtue.",
+      "A single steep peak. The locals say it last erupted out of spite.",
+      "Tall, pointy, smoking slightly. Like a disappointed admiral."
+    ],
+    "atoll": [
+      "Flat as a ship's biscuit. You'll see the palms before you see the land.",
+      "A low ring of sand and palms. Mind the reef; it minds nobody.",
+      "Barely above the waterline. The tide has opinions about it."
+    ],
+    "twin": [
+      "Two hills with a saddle between them. Sailors call it something rude.",
+      "Twin humps, one taller. Looks like a camel that gave up.",
+      "Two green hills side by side, arguing about which one is the island."
+    ]
+  }
+}

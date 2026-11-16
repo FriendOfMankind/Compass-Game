@@ -11,6 +11,9 @@ import { placeKit } from './models';
 export const LANTERN_LOCAL = new THREE.Vector3(0, DECK_Y + 1.75, MAST_Z + 0.2);
 const BINNACLE = { x: 0.62, z: 3.95, h: 1.0 };
 
+/** Lantern glass: render/lighting.ts dims it by day (a MeshBasic box would glow at noon). */
+export const LANTERN_GLASS = new THREE.MeshBasicMaterial({ color: PAL.lantern });
+
 const flat = (color: string) => new THREE.MeshLambertMaterial({ color, flatShading: true });
 
 export class Props {
@@ -73,7 +76,7 @@ export class Props {
     // Lantern hung on the aft face of the mast (the light itself lives in render/lighting.ts).
     const lamp = new THREE.Group();
     const frame = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.16), flat(PAL.iron));
-    const glow = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.17, 0.17), new THREE.MeshBasicMaterial({ color: PAL.lantern }));
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.17, 0.17), LANTERN_GLASS);
     const lid = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.1, 4), flat(PAL.iron));
     lid.position.y = 0.17; lid.rotation.y = Math.PI / 4;
     lamp.add(frame, glow, lid);

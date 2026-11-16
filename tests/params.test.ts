@@ -52,9 +52,9 @@ describe('M1 params', () => {
     expect(s.at).toBe('helm');
     expect(s.speedMs).toBe(9);
   });
-  it('defaults: NE trades, on deck, stopped; unknown station → deck', () => {
+  it('defaults: world wind field (no pinned wind), on deck, stopped; unknown station → deck', () => {
     const s = parseScenario('?at=crowsnest', 1);
-    expect(s).toMatchObject({ windFromDeg: 60, at: 'deck', speedMs: 0 });
+    expect(s).toMatchObject({ windFromDeg: null, at: 'deck', speedMs: 0 });
   });
 });
 

@@ -14,7 +14,8 @@ export interface Scenario {
   headingDeg: number;
   step: number | null;
   debug: boolean;
-  windFromDeg: number;
+  /** null = use the world's trade-wind field; a number pins a steady wind (tests, tutorial). */
+  windFromDeg: number | null;
   at: Station;
   speedMs: number;
   lookDeg: number;
@@ -48,7 +49,7 @@ export const DEFAULT_SCENARIO: Omit<Scenario, 'seed'> = {
   headingDeg: 0,
   step: null,
   debug: false,
-  windFromDeg: 60, // NE trades
+  windFromDeg: null, // world wind field
   at: 'deck',
   speedMs: 0,
   lookDeg: 0,
@@ -98,7 +99,7 @@ export function parseScenario(search: string, fallbackSeed: number): Scenario {
     headingDeg: normalizeDeg(num(p.get('heading')) ?? DEFAULT_SCENARIO.headingDeg),
     step: step === null ? null : Math.max(0, Math.trunc(step)),
     debug: flag(debugRaw),
-    windFromDeg: normalizeDeg(num(p.get('wind')) ?? DEFAULT_SCENARIO.windFromDeg),
+    windFromDeg: num(p.get('wind')) === null ? null : normalizeDeg(num(p.get('wind'))!),
     at: parseStation(p.get('at')),
     speedMs: clamp(num(p.get('speed')) ?? DEFAULT_SCENARIO.speedMs, 0, 30),
     lookDeg: num(p.get('look')) ?? 0,

@@ -132,5 +132,26 @@
   "chart.first": [
     "The chart. It shows where we think we are. Thinking is doing a lot of work there.",
     "Our reckoned position. Compass, log and hope."
+  ],
+  "reef.hit": [
+    "You hit a reef. In fairness, it was there first.",
+    "That noise was the hull. Reefs have a gap. Find it.",
+    "Coral: one. Boat: zero."
+  ],
+  "aground": [
+    "We're on the beach. Boats go on water. Back off.",
+    "Aground. Very efficient way to stop."
+  ],
+  "island.arrive": [
+    "Land. Check it against the description before you start bragging.",
+    "An island. Is it the right one? Look at its shape.",
+    "Land ho. Said with mild enthusiasm."
+  ],
+  "doldrums.enter": [
+    "Welcome to the doldrums. Wind's on holiday. So's my patience.",
+    "The doldrums. Between the trade winds, nothing blows but me."
+  ],
+  "doldrums.exit": [
+    "Trade wind again. Northeast up here, southeast down there. Reliable, unlike you."
   ]
 }

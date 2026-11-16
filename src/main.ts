@@ -22,6 +22,8 @@ import { toKnots } from './nav/instruments';
 import { Navigation } from './app/navigation';
 import { TutorialRunner } from './tutorial/runner';
 import { controlsFor } from './app/controls';
+import { WorldSim } from './app/worldSim';
+import { setHazeColor } from './render/haze';
 import './ui/theme.css';
 import type { StepSetup } from './tutorial/steps';
 import type { InstrumentId } from './ui/instrumentOverlay';
@@ -67,7 +69,8 @@ window.addEventListener('resize', () => {
 });
 
 // --- state ------------------------------------------------------------------
-const wind: Wind = { fromDeg: scenario.windFromDeg, strength: 1 };
+const wind: Wind = { fromDeg: scenario.windFromDeg ?? 60, strength: 1 };
+const windFixed = scenario.windFromDeg !== null;
 let boat = createBoat(
   scenario.lonDeg * M_PER_DEG, -scenario.latDeg * M_PER_DEG, scenario.headingDeg,
   optimalTrim(trueWindAngle(scenario.headingDeg, wind.fromDeg)),
@@ -88,6 +91,10 @@ const prompt = new Prompt();
 const dialogue = new Dialogue(scenario.seed);
 const choice = new Choice();
 const hud = scenario.debug ? new DebugHud() : null;
+const worldSim = new WorldSim(scenario.seed, dialogue);
+scene.add(worldSim.islands.group);
+boat = worldSim.clearSpawn(boat);
+let blockWarp = false;
 const camWorld = new THREE.Vector3();
 const lookDir = new THREE.Vector3();
 const projV = new THREE.Vector3();
@@ -140,6 +147,11 @@ function project(azDeg: number, altDeg: number): { x: number; y: number } | null
   return { x: (projV.x * 0.5 + 0.5) * window.innerWidth, y: (-projV.y * 0.5 + 0.5) * window.innerHeight };
 }
 
+function islandDebug(): string {
+  const p = worldSim.prox;
+  return p?.island ? `near ${p.island.name} (${p.island.kind}${p.island.port ? ', port' : ''}) ${p.shoreDistM.toFixed(0)} m${p.onReef ? ' REEF' : ''}` : '';
+}
+
 const uiBlocked = () => nav.chart.isOpen || choice.isOpen;
 
 function handleKeys(): void {
@@ -181,12 +193,14 @@ function frame(nowMs: number): void {
 
   warp = stepWarp(warp, {
     atHelm: mode === 'helm', inputActive: input.anyDown(ACTIVE_KEYS) || nav.raised || !free, speedMs: boat.speedMs,
-    blocked: tutorial?.active ?? false, // no fast-forwarding the night while learning the sky
+    blocked: (tutorial?.active ?? false) || blockWarp, // no fast-forwarding while learning, or into land
   }, dt);
+  if (!windFixed && !tutorial?.active) Object.assign(wind, worldSim.windAt(-boat.z / M_PER_DEG, boat.x / M_PER_DEG, clock.gameSeconds));
   const simDt = dt * warp.warp;
   simAccum += simDt;
   while (simAccum >= SIM_STEP_S) { boat = stepBoat(boat, boatInput, wind, SIM_STEP_S); simAccum -= SIM_STEP_S; }
   clock = tickClock(clock, simDt);
+  ({ boat, blockWarp } = worldSim.update(boat, -boat.z / M_PER_DEG, nowS, camWorld));
   waveTime += dt; // waves animate in real time even under warp, or the sea looks frantic
 
   // Hull pose: sample the same waves the shader draws, then low-pass (a 12 m hull has inertia).
@@ -212,6 +226,7 @@ function frame(nowMs: number): void {
   const sky = celestial.update(jdStart + clock.gameSeconds / 86400, latDeg, lonDeg, camWorld);
   const light = sky.daylight;
   (scene.fog as THREE.Fog).color.copy(sky.horizon);
+  setHazeColor(sky.horizon);
   water.update(waveTime, camWorld, sky.horizon, light, sky.sunDir, ship.root.matrixWorld);
   lighting.update(light, sky.sunAltDeg, sky.sunDir, ship.root.position);
 
@@ -233,7 +248,8 @@ function frame(nowMs: number): void {
     mode, nearStationLabel: mode === 'deck' ? nearestStation(player)?.label ?? null : null,
     mouseCaptured: document.pointerLockElement === renderer.domElement,
     twaDeg: tel.twaDeg, luffing: tel.luffing, efficiency: tel.efficiency, warp: warp.warp,
-    navStatus: navUi.status, navHints: navUi.hints,
+    navStatus: [navUi.status, worldSim.hullScrapes ? `Hull: ${worldSim.hullScrapes} scrape${worldSim.hullScrapes > 1 ? 's' : ''}` : ''].filter(Boolean).join('    ·    '),
+    navHints: navUi.hints,
   });
   if (nav.raised && !wasRaised) prompt.use('raise');
   wasRaised = nav.raised;
@@ -251,7 +267,7 @@ function frame(nowMs: number): void {
     lonDeg,
     headingDeg: boat.headingDeg,
     speedMs: boat.speedMs,
-    windText: `from ${wind.fromDeg.toFixed(0)}°  twa ${tel.twaDeg.toFixed(0)}°  trim ${boat.trimDeg.toFixed(0)}°  eff ${(tel.efficiency * 100).toFixed(0)}%${tel.luffing ? ' LUFF' : ''}`,
+    windText: `${islandDebug()}\nfrom ${wind.fromDeg.toFixed(0)}° ×${wind.strength.toFixed(2)}  twa ${tel.twaDeg.toFixed(0)}°  trim ${boat.trimDeg.toFixed(0)}°  eff ${(tel.efficiency * 100).toFixed(0)}%${tel.luffing ? ' LUFF' : ''}`,
     ...look,
     lstText: `${(sky.lstDeg / 15).toFixed(2)}h  sun ${sky.sunAltDeg.toFixed(1)}°`,
     timeText: `day ${dayNumber(clock)} ${formatHour(hour)}  warp ×${warp.warp.toFixed(1)}  [${mode}]`,
