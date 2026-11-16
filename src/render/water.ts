@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WAVES } from '../sim/waves';
+import { DECK_HALF_BEAM, DECK_HALF_LENGTH } from '../sim/deck';
 
 // Gerstner water. Wave parameters come from sim/waves.ts (same data the CPU buoyancy uses).
 // Grid is denser near the centre (follows the camera, snapped to avoid swimming);
@@ -52,6 +53,7 @@ const vertexShader = /* glsl */ `
   }`;
 
 const fragmentShader = /* glsl */ `
+  uniform mat4 uHullInv; // world → boat-local
   uniform vec3 uDeep;
   uniform vec3 uShallow;
   uniform vec3 uSky;
@@ -61,7 +63,18 @@ const fragmentShader = /* glsl */ `
   varying vec3 vWorld;
   varying float vCrest;
   #include <fog_pars_fragment>
+  // Mirrors sim/deck.ts hullHalfWidth().
+  float hullHalfWidth(float z) {
+    float t = (z + ${DECK_HALF_LENGTH.toFixed(3)}) / ${(2 * DECK_HALF_LENGTH).toFixed(3)};
+    if (t < 0.0 || t > 1.0) return 0.0;
+    float shape = sqrt(min(1.0, t / 0.55)) * (t > 0.85 ? 1.0 - (t - 0.85) * 0.8 : 1.0);
+    return ${DECK_HALF_BEAM.toFixed(3)} * shape;
+  }
   void main() {
+    // Keep the sea out of the boat: no water drawn inside the hull footprint.
+    vec3 hl = (uHullInv * vec4(vWorld, 1.0)).xyz;
+    // 0.85: the hull narrows below the waterline; a wider mask would show sky under it.
+    if (abs(hl.x) < hullHalfWidth(hl.z) * 0.85) discard;
     // Flat shading from screen-space derivatives: low-poly look for free.
     vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
     if (n.y < 0.0) n = -n;
@@ -99,6 +112,7 @@ export class Water {
         uSky: { value: new THREE.Color() },
         uSunDir: { value: new THREE.Vector3(0.3, 0.8, -0.5).normalize() },
         uDaylight: { value: 1 },
+        uHullInv: { value: new THREE.Matrix4() },
       },
     ]);
     const mat = new THREE.ShaderMaterial({ uniforms: this.u, vertexShader, fragmentShader, fog: true });
@@ -106,7 +120,9 @@ export class Water {
     this.mesh.frustumCulled = false;
   }
 
-  update(waveTime: number, camPos: THREE.Vector3, horizon: THREE.Color, daylight: number, sunDir: THREE.Vector3): void {
+  /** hullWorld: the ship root's world matrix (water is masked out inside the hull). */
+  update(waveTime: number, camPos: THREE.Vector3, horizon: THREE.Color, daylight: number, sunDir: THREE.Vector3, hullWorld: THREE.Matrix4): void {
+    (this.u.uHullInv.value as THREE.Matrix4).copy(hullWorld).invert();
     this.u.uTime.value = waveTime;
     (this.u.uCamPos.value as THREE.Vector3).copy(camPos);
     (this.u.uDeep.value as THREE.Color).copy(this.nightDeep).lerp(this.dayDeep, daylight);

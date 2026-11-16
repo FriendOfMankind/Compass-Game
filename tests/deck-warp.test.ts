@@ -46,3 +46,13 @@ describe('warp', () => {
     expect(stepWarp(fast, { ...steady, speedMs: 1 }, 1 / 60).warp).toBe(1);
   });
 });
+
+describe('hull outline', () => {
+  it('comes to a point at the bow and is widest amidships', async () => {
+    const { hullHalfWidth, DECK_HALF_LENGTH, DECK_HALF_BEAM } = await import('../src/sim/deck');
+    expect(hullHalfWidth(-DECK_HALF_LENGTH)).toBe(0);
+    expect(hullHalfWidth(1.2)).toBeCloseTo(DECK_HALF_BEAM, 5); // max beam just aft of midships
+    expect(hullHalfWidth(-4)).toBeLessThan(hullHalfWidth(0));
+    expect(hullHalfWidth(DECK_HALF_LENGTH + 1)).toBe(0);
+  });
+});

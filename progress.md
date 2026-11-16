@@ -1,14 +1,14 @@
 # progress.md
 
 ## Current milestone
-M1: Boat feel: BUILT, awaiting Colin's playtest. Gate: "sailing around for 2 minutes is fun with nothing to do". Don't start M2 until that's a yes.
+M2: The real sky (next). M1 passed Colin's playtest.
 
 ## Done
 - **M0: Skeleton** — Vite + TS (strict) + Three.js; first-person mouse-look (click for pointer lock); static ocean plane + time-of-day sky gradient; game clock (20 min/day); debug HUD (`?debug=1`); scenario URL parser (`seed/lat/lon/time/heading/step/debug`); vitest (10 tests); `npm run shot` (Playwright, spins up its own Vite server).
   - `time=` accepts `dawn|day|noon|dusk|night|midnight`, `HH:MM`, or a number of hours.
   - Screenshots: `npm run shot -- "?lat=12&time=dusk&heading=90&debug=1" shots/x.png` (shots/ is gitignored).
 
-- **M1: Boat feel (built, not yet signed off)**
+- **M1: Boat feel**: PASSED playtest ("feels pretty good… intuitive")
   - `sim/waves.ts`: 4 Gerstner waves, single source for shader uniforms + CPU `heightAt`/`hullPose` (tested: CPU inverse matches displaced surface to ±5 mm).
   - `sim/sailing.ts`: no-go zone 38°, polar peaks on a beam reach, dead run 70%; trim model (ease too far → luff, over-sheet → stall).
   - `sim/boat.ts`: speed with inertia, rudder rate-limited and self-centring, steerage scales with speed, heel away from wind.
@@ -38,11 +38,18 @@ M1: Boat feel: BUILT, awaiting Colin's playtest. Gate: "sailing around for 2 min
 - Headless screenshot FPS is 17–27 (SwiftShader software GL). Not representative; check real FPS in the debug HUD.
 - Wheel fills the bottom of the helm view; boom sits just above head height at the mast. Tune after playtest.
 - No collision with mast/wheel when walking (you can walk through them).
+- Thin pale sliver can show under the stern from low outside angles (water mask vs hull taper). Only visible in `cam=chase`.
 - Sail trim only at the mast (per DESIGN). Walking helm→mast→helm to fix trim may be annoying. Watch for it.
 - Sky/sun are M0 placeholders (crude sun direction, no stars). M2.
 
 ## Playtest notes (Colin)
-### M1: please answer these
+### M1
+- Colin: "feels pretty good… overall intuitive. Once I need to go a certain direction, maybe upwind, things will get interesting."
+- Reported: water clipping through the boat → FIXED (water masked inside hull footprint, +0.15 m freeboard). Bow didn't close + floating bowsprit → FIXED.
+- Found while fixing: head-roll compensation doubled the tilt when looking aft → FIXED (compensation now in boat axes via a head rig).
+- Still unanswered (watch in M2 playtest): Q3 trim-at-mast chore? Q4 nausea?
+
+Original questions:
 Try: `npm run dev` → open `/?debug=1&at=helm`. Also try `?time=dusk`, `?wind=0`.
 1. Is steering responsive or sluggish? (turn rate 16°/s max)
 2. Is speed/acceleration satisfying? (max 13 m/s on a beam reach, ~4 s to build)

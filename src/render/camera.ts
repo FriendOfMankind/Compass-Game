@@ -11,12 +11,16 @@ const ROLL_COMPENSATION = 0.5;
 
 export class FirstPersonCamera {
   readonly camera: THREE.PerspectiveCamera;
+  /** Parent this to the ship. Carries eye position + roll compensation in BOAT axes,
+   *  so the compensation is correct whichever way the head is turned. */
+  readonly rig = new THREE.Group();
   yawRad = 0;
   pitchRad = 0;
 
   constructor(aspect: number) {
     this.camera = new THREE.PerspectiveCamera(70, aspect, 0.1, 6000);
     this.camera.rotation.order = 'YXZ';
+    this.rig.add(this.camera);
   }
 
   look(dxPx: number, dyPx: number): void {
@@ -26,8 +30,9 @@ export class FirstPersonCamera {
 
   /** Place the eye in boat-local coordinates. hullRollRad: the ship root's rotation.z. */
   place(localX: number, deckY: number, localZ: number, hullRollRad: number): void {
-    this.camera.position.set(localX, deckY + EYE_HEIGHT_M, localZ);
-    this.camera.rotation.set(this.pitchRad, -this.yawRad, -hullRollRad * ROLL_COMPENSATION);
+    this.rig.position.set(localX, deckY + EYE_HEIGHT_M, localZ);
+    this.rig.rotation.set(0, 0, -hullRollRad * ROLL_COMPENSATION);
+    this.camera.rotation.set(this.pitchRad, -this.yawRad, 0);
   }
 
   attachPointerLock(element: HTMLElement): void {

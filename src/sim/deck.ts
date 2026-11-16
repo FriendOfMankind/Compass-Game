@@ -21,11 +21,20 @@ export const STATION_STAND: Record<StationId, { x: number; z: number }> = {
   mast: { x: 0.7, z: -0.4 },
 };
 
-/** Half-width of the walkable deck at local z (bow narrows to a point). */
-export function deckHalfWidth(z: number): number {
+/**
+ * Outer hull half-width at local z: 0 at the bow (z = −DECK_HALF_LENGTH), full beam
+ * amidships, slight taper to the transom. render/water.ts mirrors this in GLSL.
+ */
+export function hullHalfWidth(z: number): number {
   const t = (z + DECK_HALF_LENGTH) / (2 * DECK_HALF_LENGTH); // 0 at bow, 1 at stern
-  const shape = Math.sqrt(Math.min(1, Math.max(0, t) / 0.55)) * (t > 0.85 ? 1 - (t - 0.85) * 0.8 : 1);
-  return Math.max(0, DECK_HALF_BEAM * shape - RAIL_MARGIN);
+  if (t < 0 || t > 1) return 0;
+  const shape = Math.sqrt(Math.min(1, t / 0.55)) * (t > 0.85 ? 1 - (t - 0.85) * 0.8 : 1);
+  return DECK_HALF_BEAM * shape;
+}
+
+/** Half-width of the walkable deck at local z (inside the rail). */
+export function deckHalfWidth(z: number): number {
+  return Math.max(0, hullHalfWidth(z) - RAIL_MARGIN);
 }
 
 export function clampToDeck(x: number, z: number): { x: number; z: number } {

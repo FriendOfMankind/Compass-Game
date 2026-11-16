@@ -39,7 +39,7 @@ const ship = new Ship();
 scene.add(sky.mesh, water.mesh, ship.root);
 
 const fp = new FirstPersonCamera(window.innerWidth / window.innerHeight);
-ship.root.add(fp.camera);
+ship.root.add(fp.rig);
 fp.attachPointerLock(renderer.domElement);
 fp.yawRad = THREE.MathUtils.degToRad(scenario.lookDeg);
 // Debug: external chase camera (?cam=chase) orbiting off the starboard quarter.
@@ -123,7 +123,7 @@ function frame(nowMs: number): void {
   pose.h += (p.heightM - pose.h) * k;
   pose.pitch += (p.pitchRad - pose.pitch) * k;
   pose.roll += (p.rollRad - pose.roll) * k;
-  ship.root.position.set(boat.x, pose.h - 0.25, boat.z);
+  ship.root.position.set(boat.x, pose.h - 0.1, boat.z);
   ship.root.rotation.set(pose.pitch, -headingRad, -(pose.roll + THREE.MathUtils.degToRad(boat.heelDeg)));
 
   const tel = telemetry(boat, wind);
@@ -138,7 +138,7 @@ function frame(nowMs: number): void {
   sunDirection(hour, sunDir);
   const horizon = sky.update(hour, camWorld);
   (scene.fog as THREE.Fog).color.copy(horizon);
-  water.update(waveTime, camWorld, horizon, light, sunDir);
+  water.update(waveTime, camWorld, horizon, light, sunDir, ship.root.matrixWorld);
   hemi.intensity = 0.35 + 0.75 * light;
   sun.intensity = 1.6 * light;
   sun.position.copy(sunDir).multiplyScalar(100);

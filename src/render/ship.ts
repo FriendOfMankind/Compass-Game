@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DECK_HALF_LENGTH, deckHalfWidth } from '../sim/deck';
+import { DECK_HALF_LENGTH, hullHalfWidth } from '../sim/deck';
 
 // Low-poly sloop, generated in code. Boat-local axes: +X starboard, −Z bow, +Y up.
 // Hull outline is derived from sim/deck.ts so the walkable area matches the mesh.
@@ -15,15 +15,14 @@ const BOOM_LENGTH = 5.2;
 const flat = (color: string, side: THREE.Side = THREE.FrontSide) =>
   new THREE.MeshLambertMaterial({ color, flatShading: true, side });
 
-const hullHalfWidth = (z: number) => deckHalfWidth(z) + 0.35;
-
 function hullGeometry(): THREE.BufferGeometry {
   const zs: number[] = [];
-  for (let i = 0; i <= 14; i++) zs.push(-DECK_HALF_LENGTH - 0.4 + (i / 14) * (2 * DECK_HALF_LENGTH + 0.4));
+  // Denser sections near the bow, where the width changes fastest.
+  for (let i = 0; i <= 18; i++) zs.push(-DECK_HALF_LENGTH + (i / 18) ** 1.6 * 2 * DECK_HALF_LENGTH);
   // Section profile from port bulwark → keel → starboard bulwark.
   const section = (z: number) => {
     const w = Math.max(0.02, hullHalfWidth(z));
-    const keel = KEEL_Y * Math.min(1, (z + DECK_HALF_LENGTH + 0.4) / 2.5);
+    const keel = KEEL_Y * Math.min(1, 0.25 + (z + DECK_HALF_LENGTH) / 2.5);
     return [
       [-w, BULWARK_Y], [-w * 0.95, 0.35], [-w * 0.5, keel * 0.7], [0, keel],
       [w * 0.5, keel * 0.7], [w * 0.95, 0.35], [w, BULWARK_Y],
@@ -51,13 +50,13 @@ function deckGeometry(): THREE.BufferGeometry {
   const shape = new THREE.Shape();
   const n = 24;
   for (let i = 0; i <= n; i++) {
-    const z = -DECK_HALF_LENGTH - 0.4 + (i / n) * (2 * DECK_HALF_LENGTH + 0.4);
-    const p = [hullHalfWidth(z) - 0.02, -z]; // shape is in XY; we map Y → −Z below
+    const z = -DECK_HALF_LENGTH + (i / n) ** 1.6 * 2 * DECK_HALF_LENGTH;
+    const p = [Math.max(0, hullHalfWidth(z) - 0.02), -z]; // shape is in XY; we map Y → −Z below
     if (i === 0) shape.moveTo(p[0], p[1]); else shape.lineTo(p[0], p[1]);
   }
   for (let i = n; i >= 0; i--) {
-    const z = -DECK_HALF_LENGTH - 0.4 + (i / n) * (2 * DECK_HALF_LENGTH + 0.4);
-    shape.lineTo(-(hullHalfWidth(z) - 0.02), -z);
+    const z = -DECK_HALF_LENGTH + (i / n) ** 1.6 * 2 * DECK_HALF_LENGTH;
+    shape.lineTo(-Math.max(0, hullHalfWidth(z) - 0.02), -z);
   }
   const g = new THREE.ShapeGeometry(shape);
   g.rotateX(-Math.PI / 2);
@@ -82,8 +81,10 @@ export class Ship {
     mast.position.set(0, DECK_Y + MAST_HEIGHT / 2, MAST_Z);
 
     const bowsprit = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 2.2, 6), flat('#5c3a1e'));
-    bowsprit.rotation.x = Math.PI / 2 - 0.15;
-    bowsprit.position.set(0, BULWARK_Y, -DECK_HALF_LENGTH - 1.2);
+    // Axis points forward and slightly up, its aft end tucked into the stem.
+    const sprit = 0.26;
+    bowsprit.rotation.x = -(Math.PI / 2 - sprit);
+    bowsprit.position.set(0, BULWARK_Y - 0.15 + Math.sin(sprit) * 0.9, -DECK_HALF_LENGTH + 0.2 - Math.cos(sprit) * 0.9);
 
     // Boom + mainsail rotate together around the mast.
     this.boomPivot.position.set(0, 0, MAST_Z);
