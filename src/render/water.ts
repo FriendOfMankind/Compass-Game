@@ -73,8 +73,13 @@ const fragmentShader = /* glsl */ `
   void main() {
     // Keep the sea out of the boat: no water drawn inside the hull footprint.
     vec3 hl = (uHullInv * vec4(vWorld, 1.0)).xyz;
-    // 0.85: the hull narrows below the waterline; a wider mask would show sky under it.
-    if (abs(hl.x) < hullHalfWidth(hl.z) * 0.85) discard;
+    // Below the hull's chine (local y 0.35) the hull narrows, so only mask 85% of the beam there
+    // (a wider hole would show sky under the hull from outside). Above it the sides are full
+    // width, so mask all of it: otherwise a wave crest on the heeled lee side pokes up through
+    // the deck between 85% and 100% of the beam (Colin's M6 playtest).
+    // Follows the hull section from sim/deck-based shipHull.ts: 0.95·beam at the chine (y 0.35) → full beam at the rail (y 1.5).
+    float maskW = hl.y > 0.35 ? 0.95 + 0.05 * clamp((hl.y - 0.35) / 1.15, 0.0, 1.0) : 0.85;
+    if (abs(hl.x) < hullHalfWidth(hl.z) * maskW) discard;
     // Flat shading from screen-space derivatives: low-poly look for free.
     vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
     if (n.y < 0.0) n = -n;

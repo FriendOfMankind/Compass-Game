@@ -144,6 +144,7 @@ M3.5 merged to main, but Colin's verdict + FPS check are still outstanding, and 
 ## Playtest notes (Colin)
 ### M6 playtest (Colin, in progress)
 - Stuck on step 6 (fist on Polaris): the quiz never appeared. Fixed, see Known bugs.
+- "Water clips into the boat a little" (helm view, sailing ~090). Couldn't reproduce in a still; most likely wave crests on the heeled lee side poking through the deck in the strip between 85% and 100% of the beam, which the water mask left open. Mask now follows the hull section above the chine (95% → 100% of beam). Chase-cam check: no new holes. Needs Colin to confirm.
 
 ### M6: please answer these
 `http://localhost:5173/` → title → New voyage. Play until you can buy the chronometer.
